@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { History, ClipboardList, AlertTriangle, Bookmark, Lightbulb, Sparkles } from 'lucide-react'
+import { History, ClipboardList, AlertTriangle, Bookmark, Lightbulb, Sparkles, Trash2 } from 'lucide-react'
 import { aiApi, examsApi, learningApi, practiceApi } from '../api/client'
 import { EmptyState, Panel, useToast } from '../components/Layout'
 
@@ -37,6 +37,29 @@ export default function Archive() {
     finally { setAdviceBusy(false) }
   }
 
+  const deletePractice = async (id: string) => {
+    if (!window.confirm('确定删除这条练习记录吗？此操作不可恢复。')) return
+    try { await practiceApi.deleteHistory(id); toast('练习记录已删除', 'success'); load() }
+    catch (e) { toast((e as Error).message, 'error') }
+  }
+  const clearPractices = async () => {
+    if (!history.length) return
+    if (!window.confirm(`确定清空全部 ${history.length} 条练习记录吗？此操作不可恢复。`)) return
+    try { await practiceApi.clearHistory(); toast('练习记录已清空', 'success'); load() }
+    catch (e) { toast((e as Error).message, 'error') }
+  }
+  const deleteExam = async (id: string) => {
+    if (!window.confirm('确定删除这条考试记录吗？此操作不可恢复。')) return
+    try { await examsApi.deleteHistory(id); toast('考试记录已删除', 'success'); load() }
+    catch (e) { toast((e as Error).message, 'error') }
+  }
+  const clearExams = async () => {
+    if (!examHistory.length) return
+    if (!window.confirm(`确定清空全部 ${examHistory.length} 条考试记录吗？此操作不可恢复。`)) return
+    try { await examsApi.clearHistory(); toast('考试记录已清空', 'success'); load() }
+    catch (e) { toast((e as Error).message, 'error') }
+  }
+
   const tabs: { key: Tab; label: string; icon: any; count: number }[] = [
     { key: 'history', label: '练习历史', icon: History, count: history.length },
     { key: 'exams', label: '考试记录', icon: ClipboardList, count: examHistory.length },
@@ -64,18 +87,21 @@ export default function Archive() {
       </div>
 
       {tab === 'history' && (
-        <Panel title="历史练习记录">
+        <Panel title="历史练习记录" action={
+          history.length ? <button className="flex items-center gap-1 text-[11px] text-steel-500 hover:text-red-400" onClick={clearPractices}>
+            <Trash2 size={12} /> 清空全部
+          </button> : undefined
+        }>
           {history.length ? (
             <div className="space-y-2">
               {history.map((h) => (
-                <Link key={h.id} to={`/practice/result/${h.id}`}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-ink-700/60 bg-ink-900/40 px-4 py-3 transition hover:border-neon/40">
-                  <div>
+                <div key={h.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-ink-700/60 bg-ink-900/40 px-4 py-3 transition hover:border-neon/40">
+                  <Link to={`/practice/result/${h.id}`} className="min-w-[160px] flex-1">
                     <div className="text-[13px] text-[#d7e6dd]">练习 · {h.total_count} 题</div>
                     <div className="mt-1 text-[11px] text-steel-500">
                       {new Date(h.submitted_at).toLocaleString('zh-CN')}
                     </div>
-                  </div>
+                  </Link>
                   <div className="flex items-center gap-5">
                     <div className="text-right">
                       <div className="text-[11px] text-steel-500">答对</div>
@@ -85,8 +111,12 @@ export default function Archive() {
                       <div className="text-[11px] text-steel-500">正确率</div>
                       <div className="text-[15px] text-neon">{Math.round(h.accuracy * 100)}%</div>
                     </div>
+                    <button className="rounded p-1.5 text-steel-500 transition hover:bg-red-500/10 hover:text-red-400"
+                      title="删除记录" onClick={() => deletePractice(h.id)}>
+                      <Trash2 size={14} />
+                    </button>
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
           ) : <EmptyState text="还没有已提交的练习记录" />}
@@ -94,18 +124,21 @@ export default function Archive() {
       )}
 
       {tab === 'exams' && (
-        <Panel title="历史考试记录">
+        <Panel title="历史考试记录" action={
+          examHistory.length ? <button className="flex items-center gap-1 text-[11px] text-steel-500 hover:text-red-400" onClick={clearExams}>
+            <Trash2 size={12} /> 清空全部
+          </button> : undefined
+        }>
           {examHistory.length ? (
             <div className="space-y-2">
               {examHistory.map((h) => (
-                <Link key={h.id} to={`/exams/result/${h.id}`}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-ink-700/60 bg-ink-900/40 px-4 py-3 transition hover:border-neon/40">
-                  <div>
+                <div key={h.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-ink-700/60 bg-ink-900/40 px-4 py-3 transition hover:border-neon/40">
+                  <Link to={`/exams/result/${h.id}`} className="min-w-[160px] flex-1">
                     <div className="text-[13px] text-[#d7e6dd]">{h.paper_name}</div>
                     <div className="mt-1 text-[11px] text-steel-500">
                       {new Date(h.submitted_at).toLocaleString('zh-CN')} · 答对 {h.correct_count} 题
                     </div>
-                  </div>
+                  </Link>
                   <div className="flex items-center gap-5">
                     <div className="text-right">
                       <div className="text-[11px] text-steel-500">得分</div>
@@ -115,8 +148,12 @@ export default function Archive() {
                       <div className="text-[11px] text-steel-500">正确率</div>
                       <div className="text-[15px] text-neon">{Math.round(h.accuracy * 100)}%</div>
                     </div>
+                    <button className="rounded p-1.5 text-steel-500 transition hover:bg-red-500/10 hover:text-red-400"
+                      title="删除记录" onClick={() => deleteExam(h.id)}>
+                      <Trash2 size={14} />
+                    </button>
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
           ) : <EmptyState text="还没有已提交的考试记录" />}

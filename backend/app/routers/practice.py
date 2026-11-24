@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from .. import game_service, models, schemas
+from .. import game_service, models, question_generator, schemas
 from ..auth import get_current_user
 from ..database import get_db
 
@@ -64,10 +64,25 @@ def create_session(
         query = query.filter(models.Question.question_type.in_(payload.question_types))
 
     candidates = query.all()
+    auto_generated = 0
+    shortage = payload.count - len(candidates)
+    if shortage > 0:
+        # 题量不足时，按用户选定的条件真实生成题目并写入题库，而不是虚构或报错。
+        # 优先取用户勾选的知识点；题型取首个勾选项（或默认单选），难度取首个勾选项（或默认入门）。
+        qtype = payload.question_types[0] if payload.question_types else "单项选择题"
+        difficulty = payload.difficulties[0] if payload.difficulties else "入门"
+        generated, report = question_generator.generate_questions(
+            db, payload.knowledge_point_ids, qtype, difficulty, shortage
+        )
+        if generated:
+            ids = question_generator.persist_questions(db, generated, user.id, "ai")
+            auto_generated = len(ids)
+            # 重新查询，把新题纳入候选
+            candidates = query.all()
     if len(candidates) < payload.count:
         raise HTTPException(
             status_code=409,
-            detail=(f"符合条件的题目只有 {len(candidates)} 道，少于请求的 {payload.count} 道。"
+            detail=(f"符合条件并成功生成的题目只有 {len(candidates)} 道，少于请求的 {payload.count} 道。"
                     "请放宽知识点、难度或题型条件后重试。系统不会虚构题目。"),
         )
 
@@ -90,6 +105,7 @@ def create_session(
         "session_id": session.id,
         "total_count": session.total_count,
         "time_limit_seconds": time_limit,
+        "auto_generated": auto_generated,
         "questions": [_question_payload(q) for q in picked],
     }
 
@@ -417,6 +433,47 @@ def history(db: Session = Depends(get_db), user: models.User = Depends(get_curre
         "accuracy": s.accuracy, "submitted_at": s.submitted_at.isoformat(),
         "config": s.config_json,
     } for s in sessions]
+
+
+@router.delete("/history/{session_id}", response_model=dict)
+def delete_history(session_id: str, db: Session = Depends(get_db),
+                   user: models.User = Depends(get_current_user)):
+    """删除一条练习历史，级联清理答题明细与对应学习记录。"""
+    session = db.query(models.PracticeSession).filter(
+        models.PracticeSession.id == session_id,
+        models.PracticeSession.user_id == user.id,
+    ).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="练习记录不存在")
+    db.query(models.PracticeAnswer).filter(models.PracticeAnswer.session_id == session_id).delete(synchronize_session=False)
+    db.query(models.LearningRecord).filter(
+        models.LearningRecord.user_id == user.id,
+        models.LearningRecord.record_type == "practice",
+        models.LearningRecord.ref_id == session_id,
+    ).delete(synchronize_session=False)
+    db.delete(session)
+    db.commit()
+    return {"message": "练习记录已删除"}
+
+
+@router.delete("/history", response_model=dict)
+def clear_history(db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
+    """清空当前用户的全部练习历史。"""
+    sessions = db.query(models.PracticeSession).filter(
+        models.PracticeSession.user_id == user.id
+    ).all()
+    ids = [s.id for s in sessions]
+    if ids:
+        db.query(models.PracticeAnswer).filter(models.PracticeAnswer.session_id.in_(ids)).delete(synchronize_session=False)
+        db.query(models.LearningRecord).filter(
+            models.LearningRecord.user_id == user.id,
+            models.LearningRecord.record_type == "practice",
+            models.LearningRecord.ref_id.in_(ids),
+        ).delete(synchronize_session=False)
+    for s in sessions:
+        db.delete(s)
+    db.commit()
+    return {"message": f"已清空 {len(ids)} 条练习记录"}
 
 
 @router.get("/wrong-questions", response_model=list[dict])

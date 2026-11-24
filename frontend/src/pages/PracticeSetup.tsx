@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronDown, ChevronRight, Dumbbell, RotateCcw, CheckSquare } from 'lucide-react'
-import { learningApi, practiceApi } from '../api/client'
+import { ChevronDown, ChevronRight, Dumbbell, RotateCcw, CheckSquare, Sparkles, Plus, RefreshCw } from 'lucide-react'
+import { learningApi, practiceApi, questionsApi } from '../api/client'
 import { Panel, useToast } from '../components/Layout'
 import type { Chapter, KnowledgePoint, PracticeConfig } from '../types'
 
@@ -24,6 +24,16 @@ export default function PracticeSetup() {
   const [customTime, setCustomTime] = useState('')
   const [expanded, setExpanded] = useState<string[]>([])
   const [busy, setBusy] = useState(false)
+  const [available, setAvailable] = useState<number | null>(null)
+  const [genBusy, setGenBusy] = useState(false)
+  const [showCustom, setShowCustom] = useState(false)
+  const [genQtype, setGenQtype] = useState(TYPES[0])
+  const [genDiff, setGenDiff] = useState(DIFFICULTIES[0])
+  const [genCount, setGenCount] = useState(5)
+  // 自编题表单
+  const [cf, setCf] = useState({ chapter_id: '', knowledge_point_id: '', question_type: TYPES[0],
+    difficulty: DIFFICULTIES[0], question_content: '', code_content: '', correct_answer: '', explanation: '' })
+  const [cfOptions, setCfOptions] = useState([{ key: 'A', text: '' }, { key: 'B', text: '' }, { key: 'C', text: '' }, { key: 'D', text: '' }])
 
   useEffect(() => {
     Promise.all([learningApi.chapters(), learningApi.kps()])
@@ -52,6 +62,66 @@ export default function PracticeSetup() {
   const finalCount = customCount ? Number(customCount) : count
   const finalTime = customTime ? Number(customTime) : time
 
+  // 实时预览当前筛选条件下的可用题量
+  const filterKey = JSON.stringify({ selectedKps, difficulties, types })
+  useEffect(() => {
+    const config = {
+      knowledge_point_ids: selectedKps,
+      difficulties,
+      question_types: types,
+    }
+    questionsApi.availability(config as Record<string, unknown>)
+      .then((r) => setAvailable(r.data.available))
+      .catch(() => setAvailable(null))
+  }, [filterKey])
+
+  const refreshAvailable = () => questionsApi.availability({
+    knowledge_point_ids: selectedKps, difficulties, question_types: types,
+  } as Record<string, unknown>).then((r) => setAvailable(r.data.available)).catch(() => {})
+
+  const aiGenerate = async () => {
+    if (!selectedKps.length) { toast('请先选择知识点，AI 才能按知识点出题', 'error'); return }
+    setGenBusy(true)
+    try {
+      const r = await questionsApi.aiGenerate({
+        knowledge_point_ids: selectedKps, qtype: genQtype, difficulty: genDiff, count: genCount,
+      })
+      toast(`AI 已生成并校验通过 ${r.data.generated} 道「${genDiff}·${genQtype}」题目，已加入题库`, 'success')
+      await refreshAvailable()
+    } catch (e) { toast((e as Error).message, 'error') }
+    finally { setGenBusy(false) }
+  }
+
+  const submitCustom = async () => {
+    if (!cf.knowledge_point_id) { toast('请选择知识点', 'error'); return }
+    if (!cf.question_content.trim() || !cf.correct_answer.trim() || !cf.explanation.trim()) {
+      toast('请填写题干、正确答案和解析', 'error'); return
+    }
+    const needsOptions = !['填空题', '编程题'].includes(cf.question_type)
+    const payload: Record<string, unknown> = {
+      chapter_id: cf.chapter_id, knowledge_point_id: cf.knowledge_point_id,
+      question_type: cf.question_type, difficulty: cf.difficulty,
+      question_content: cf.question_content, code_content: cf.code_content,
+      correct_answer: cf.correct_answer, explanation: cf.explanation, score: 1,
+    }
+    if (needsOptions) {
+      const cleaned = cfOptions.filter((o) => o.text.trim())
+      if (cleaned.length < 2) { toast('选择题至少填写 2 个选项', 'error'); return }
+      payload.options = cleaned.map((o, i) => ({ key: 'ABCD'[i], text: o.text }))
+    }
+    setGenBusy(true)
+    try {
+      await questionsApi.custom(payload)
+      toast('自编题已通过校验并加入题库', 'success')
+      setShowCustom(false)
+      setCf({ chapter_id: '', knowledge_point_id: '', question_type: TYPES[0], difficulty: DIFFICULTIES[0],
+        question_content: '', code_content: '', correct_answer: '', explanation: '' })
+      setCfOptions([{ key: 'A', text: '' }, { key: 'B', text: '' }, { key: 'C', text: '' }, { key: 'D', text: '' }])
+      await refreshAvailable()
+    } catch (e) { toast((e as Error).message, 'error') }
+    finally { setGenBusy(false) }
+  }
+
   const start = async () => {
     if (!selectedKps.length) { toast('请至少选择一个知识点', 'error'); return }
     if (!finalCount || finalCount < 1) { toast('题量必须是正整数', 'error'); return }
@@ -66,7 +136,8 @@ export default function PracticeSetup() {
     setBusy(true)
     try {
       const res = await practiceApi.create(config as unknown as Record<string, unknown>)
-      toast(`已生成 ${res.data.total_count} 道题目`, 'success')
+      const extra = res.data.auto_generated ? `（其中 ${res.data.auto_generated} 道为自动补充生成）` : ''
+      toast(`已生成 ${res.data.total_count} 道题目${extra}`, 'success')
       sessionStorage.setItem('clo_practice_start', String(Date.now()))
       navigate(`/practice/session/${res.data.session_id}`)
     } catch (e) { toast((e as Error).message, 'error') }
@@ -203,16 +274,106 @@ export default function PracticeSetup() {
           </Panel>
 
           <div className="panel p-4">
-            <div className="mb-3 flex items-center justify-between text-[11px] text-steel-500">
+            <div className="mb-2 flex items-center justify-between text-[11px] text-steel-500">
               <span>已选 {selectedKps.length} 个知识点 · {finalCount} 题 · {finalTime ? `${finalTime} 分钟` : '不限时'}</span>
               <button className="flex items-center gap-1 hover:text-neon" onClick={() => {
                 setSelectedKps([]); setDifficulties([]); setTypes([]); setCount(10); setTime(null); setCustomCount(''); setCustomTime('')
               }}><RotateCcw size={12} /> 重置</button>
             </div>
-            <button className="btn-primary w-full" onClick={start} disabled={busy}>
+            <div className="mb-3 flex items-center justify-between rounded-lg border border-ink-700/60 bg-ink-900/50 px-3 py-2 text-[11px]">
+              <span className="text-steel-500">当前条件可用题目</span>
+              <span className={`flex items-center gap-1 ${available === null ? 'text-steel-500' : available >= finalCount ? 'text-neon' : 'text-amber-400'}`}>
+                <RefreshCw size={11} /> {available === null ? '检测中...' : `${available} 道`}
+              </span>
+            </div>
+            {available !== null && available < finalCount && (
+              <div className="mb-3 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-[11px] leading-5 text-amber-300/90">
+                题库现有 {available} 道符合条件，不足 {finalCount} 道。开始练习时系统会按条件自动补充生成真实题目，
+                也可用下方「AI 出题」提前补足。
+              </div>
+            )}
+            <button className="btn-primary w-full" onClick={start} disabled={busy || !selectedKps.length}>
               <Dumbbell size={16} /> {busy ? '正在组卷...' : '开始练习'}
             </button>
           </div>
+
+          <Panel title="题库补充" action={
+            <button className="text-[11px] text-neon hover:underline" onClick={() => setShowCustom((v) => !v)}>
+              {showCustom ? '收起自编题' : '+ 自编题'}
+            </button>
+          }>
+            <p className="mb-3 text-[11px] leading-5 text-steel-500">
+              勾选条件后若题目不足，可让 AI 按知识点即时出题（经校验后入题库），或自己编写题目。
+            </p>
+            <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <select className="field" value={genQtype} onChange={(e) => setGenQtype(e.target.value)}>
+                  {TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
+                <select className="field" value={genDiff} onChange={(e) => setGenDiff(e.target.value)}>
+                  {DIFFICULTIES.map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-steel-500">生成数量</span>
+                <input className="field max-w-[90px]" type="number" min={1} max={50} value={genCount}
+                  onChange={(e) => setGenCount(Number(e.target.value))} />
+              </div>
+              <button className="btn-ghost w-full" onClick={aiGenerate} disabled={genBusy || !selectedKps.length}>
+                <Sparkles size={13} /> {genBusy ? '生成中...' : `AI 生成 ${genCount} 道题`}
+              </button>
+            </div>
+
+            {showCustom && (
+              <div className="mt-4 space-y-2 border-t border-ink-700/60 pt-4">
+                <div className="text-[11px] text-neon-dim">自编题表单</div>
+                <select className="field w-full" value={cf.chapter_id} onChange={(e) => {
+                  const ch = e.target.value
+                  setCf((p) => ({ ...p, chapter_id: ch, knowledge_point_id: '' }))
+                }}>
+                  <option value="">选择章节</option>
+                  {chapters.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+                <select className="field w-full" value={cf.knowledge_point_id} onChange={(e) => {
+                  const kp = kps.find((k) => k.id === e.target.value)
+                  setCf((p) => ({ ...p, knowledge_point_id: e.target.value, chapter_id: kp?.chapter_id || p.chapter_id }))
+                }}>
+                  <option value="">选择知识点</option>
+                  {(byChapter.get(cf.chapter_id) || []).map((k) => <option key={k.id} value={k.id}>{k.name}</option>)}
+                </select>
+                <div className="grid grid-cols-2 gap-2">
+                  <select className="field" value={cf.question_type} onChange={(e) => setCf((p) => ({ ...p, question_type: e.target.value }))}>
+                    {TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                  <select className="field" value={cf.difficulty} onChange={(e) => setCf((p) => ({ ...p, difficulty: e.target.value }))}>
+                    {DIFFICULTIES.map((d) => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                </div>
+                <textarea className="field min-h-[60px] w-full" placeholder="题干（必填）" value={cf.question_content}
+                  onChange={(e) => setCf((p) => ({ ...p, question_content: e.target.value }))} />
+                <textarea className="field min-h-[50px] w-full font-mono" placeholder="C 代码（可选）" value={cf.code_content}
+                  onChange={(e) => setCf((p) => ({ ...p, code_content: e.target.value }))} />
+                {!['填空题', '编程题'].includes(cf.question_type) && (
+                  <div className="space-y-1">
+                    {cfOptions.map((o, i) => (
+                      <div key={o.key} className="flex items-center gap-2">
+                        <span className="w-4 font-mono text-[11px] text-steel-500">{o.key}</span>
+                        <input className="field flex-1" placeholder={`选项 ${o.key}`} value={o.text}
+                          onChange={(e) => setCfOptions((prev) => prev.map((x, idx) => idx === i ? { ...x, text: e.target.value } : x))} />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <input className="field w-full" placeholder="正确答案（如 A 或 A,B 或文本）" value={cf.correct_answer}
+                  onChange={(e) => setCf((p) => ({ ...p, correct_answer: e.target.value }))} />
+                <textarea className="field min-h-[50px] w-full" placeholder="详细解析（必填，至少 8 字）" value={cf.explanation}
+                  onChange={(e) => setCf((p) => ({ ...p, explanation: e.target.value }))} />
+                <button className="btn-primary w-full" onClick={submitCustom} disabled={genBusy}>
+                  <Plus size={13} /> {genBusy ? '提交中...' : '添加题目到题库'}
+                </button>
+              </div>
+            )}
+          </Panel>
         </div>
       </div>
     </div>

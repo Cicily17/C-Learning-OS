@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
 from .database import Base, engine
-from .routers import ai, auth, exams, game, learning, practice
+from .routers import ai, auth, exams, game, learning, practice, questions
 
 app = FastAPI(title="C Learning OS API", version="0.2.0")
 
@@ -21,6 +21,7 @@ app.include_router(practice.router)
 app.include_router(exams.router)
 app.include_router(game.router)
 app.include_router(ai.router)
+app.include_router(questions.router)
 
 
 @app.on_event("startup")

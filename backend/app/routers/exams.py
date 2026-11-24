@@ -507,3 +507,42 @@ def exam_history(db: Session = Depends(get_db), user: models.User = Depends(get_
         "time_used_seconds": s.time_used_seconds,
         "submitted_at": s.submitted_at.isoformat() if s.submitted_at else None,
     } for s, p in rows]
+
+
+@router.delete("/history/{session_id}", response_model=dict)
+def delete_exam_history(session_id: str, db: Session = Depends(get_db),
+                        user: models.User = Depends(get_current_user)):
+    """删除一条考试记录，级联清理作答明细与学习记录。"""
+    session = db.query(models.ExamSession).filter(
+        models.ExamSession.id == session_id,
+        models.ExamSession.user_id == user.id,
+    ).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="考试记录不存在")
+    db.query(models.ExamAnswer).filter(models.ExamAnswer.session_id == session_id).delete(synchronize_session=False)
+    db.query(models.LearningRecord).filter(
+        models.LearningRecord.user_id == user.id,
+        models.LearningRecord.record_type == "exam",
+        models.LearningRecord.ref_id == session_id,
+    ).delete(synchronize_session=False)
+    db.delete(session)
+    db.commit()
+    return {"message": "考试记录已删除"}
+
+
+@router.delete("/history", response_model=dict)
+def clear_exam_history(db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
+    """清空当前用户的全部考试记录。"""
+    sessions = db.query(models.ExamSession).filter(models.ExamSession.user_id == user.id).all()
+    ids = [s.id for s in sessions]
+    if ids:
+        db.query(models.ExamAnswer).filter(models.ExamAnswer.session_id.in_(ids)).delete(synchronize_session=False)
+        db.query(models.LearningRecord).filter(
+            models.LearningRecord.user_id == user.id,
+            models.LearningRecord.record_type == "exam",
+            models.LearningRecord.ref_id.in_(ids),
+        ).delete(synchronize_session=False)
+    for s in sessions:
+        db.delete(s)
+    db.commit()
+    return {"message": f"已清空 {len(ids)} 条考试记录"}

@@ -225,6 +225,9 @@ def seed():
 
         db.commit()
         print(f"初始化完成：{len(CHAPTERS)} 个章节，{len(kp_refs)} 个知识点，{q_no} 道题目。")
+        # 追加覆盖全部题型与难度的扩充题库
+        from .seed_expansion import seed_expansion
+        seed_expansion()
     finally:
         db.close()
 

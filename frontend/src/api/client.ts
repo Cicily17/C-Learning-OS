@@ -54,6 +54,8 @@ export const practiceApi = {
   result: (id: string) => api.get(`/practice/sessions/${id}/result`),
   history: () => api.get('/practice/history'),
   wrongQuestions: () => api.get('/practice/wrong-questions'),
+  deleteHistory: (id: string) => api.delete(`/practice/history/${id}`),
+  clearHistory: () => api.delete('/practice/history'),
 }
 
 export const examsApi = {
@@ -67,6 +69,16 @@ export const examsApi = {
   submit: (id: string) => api.post(`/exams/sessions/${id}/submit`),
   result: (id: string) => api.get(`/exams/sessions/${id}/result`),
   history: () => api.get('/exams/history'),
+  deleteHistory: (id: string) => api.delete(`/exams/history/${id}`),
+  clearHistory: () => api.delete('/exams/history'),
+}
+
+export const questionsApi = {
+  availability: (data: Record<string, unknown>) => api.post('/questions/availability', data),
+  aiGenerate: (data: Record<string, unknown>) => api.post('/questions/ai-generate', data),
+  custom: (data: Record<string, unknown>) => api.post('/questions/custom', data),
+  mine: () => api.get('/questions/mine'),
+  remove: (id: string) => api.delete(`/questions/${id}`),
 }
 
 export const gameApi = {
