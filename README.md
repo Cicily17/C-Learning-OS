@@ -66,7 +66,16 @@ cp .env.example .env
 DATABASE_URL=postgresql+psycopg2://postgres:postgres@127.0.0.1:5432/clearning
 SECRET_KEY=请替换为强随机字符串
 CORS_ORIGINS=http://127.0.0.1:5174
+
+# AI 大模型（可选，兼容 OpenAI Chat Completions 协议）
+# 已验证可用的示例：DeepSeek
+AI_PROVIDER=deepseek
+AI_API_KEY=你的密钥
+AI_MODEL=deepseek-chat
+AI_BASE_URL=https://api.deepseek.com
 ```
+
+> 配置大模型密钥后，AI 助手对话与「AI 出题」会自动改走真实大模型；未配置时仍以本地规则引擎回退，功能不中断。密钥只保存在后端 `.env`（已被 `.gitignore` 排除），不会下发前端。也可由管理员通过 `PUT /api/ai/config` 写入服务端配置（优先于环境变量）。
 
 ### 2. 初始化知识点与题库
 
@@ -170,7 +179,7 @@ C-Learning-OS/
 ## 已知限制
 
 - 代码实验室使用**受限 C 子集解释器**而非完整 C11 沙箱：不支持结构体、文件 IO 等特性；生产部署仍应使用 Docker/容器隔离。
-- AI 默认使用内置规则引擎；配置大模型密钥后自动切换。AI 动态出题尚未接入正式考试。
+- AI 已接入 DeepSeek 大模型（服务端 `.env` 配置，兼容 OpenAI 协议）；也可切换为其他兼容 Chat Completions 的服务商。未配置密钥时自动回退内置规则引擎。AI 动态出题尚未接入正式考试（考试题目来自固定题库以保证公平与保密）。
 - 开发环境因系统策略做过适配（便携版 PostgreSQL、SQLAlchemy 1.4、固定端口 5174），详情见 `docs/RUNBOOK.md` 与 `docs/KNOWN_ISSUES.md`。
 - `streak_days` 目前按练习提交累加，尚未实现按自然日刷新。
 
