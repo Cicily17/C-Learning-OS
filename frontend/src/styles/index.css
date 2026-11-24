@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  background: #050d0a;
+  color: #d7e6dd;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: #050d0a;
+  background-image:
+    linear-gradient(rgba(141, 255, 74, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(141, 255, 74, 0.035) 1px, transparent 1px),
+    radial-gradient(ellipse at 20% 0%, rgba(29, 71, 56, 0.35), transparent 55%),
+    radial-gradient(ellipse at 85% 90%, rgba(22, 53, 42, 0.35), transparent 50%);
+  background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%;
+  font-family: Inter, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #081611; }
+::-webkit-scrollbar-thumb { background: #1d4738; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #2d6b50; }
+
+@layer components {
+  .panel {
+    @apply rounded-xl border border-ink-700/70 bg-ink-850/70 backdrop-blur-sm;
+    box-shadow: 0 0 0 1px rgba(141,255,74,0.03), 0 16px 36px rgba(0,0,0,0.28);
+  }
+  .panel-head {
+    @apply flex items-center justify-between border-b border-ink-700/60 px-4 py-3;
+  }
+  .panel-title {
+    @apply text-[13px] font-medium tracking-wide text-neon;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-neon px-4 py-2 text-[13px] font-medium text-ink-950 transition hover:bg-neon-soft active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-ink-600/70 bg-ink-800/50 px-4 py-2 text-[13px] text-steel-400 transition hover:border-neon/50 hover:text-neon active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40;
+  }
+  .tag {
+    @apply inline-flex items-center rounded border border-ink-600/60 bg-ink-800/60 px-2 py-0.5 text-[11px] text-steel-400;
+  }
+  .tag-neon {
+    @apply inline-flex items-center rounded border border-neon/30 bg-neon/10 px-2 py-0.5 text-[11px] text-neon;
+  }
+  .field {
+    @apply w-full rounded-lg border border-ink-600/70 bg-ink-900/80 px-3 py-2 text-[13px] text-[#d7e6dd] outline-none transition placeholder:text-steel-500 focus:border-neon/60;
+  }
+  .code-block {
+    @apply overflow-x-auto rounded-lg border border-ink-700/70 bg-[#04100b] p-4 font-mono text-[12.5px] leading-6 text-[#b8d9c4];
+  }
+  .progress-track {
+    @apply h-1.5 overflow-hidden rounded-full bg-ink-700/70;
+  }
+  .progress-fill {
+    @apply h-full rounded-full bg-gradient-to-r from-neon-dim to-neon transition-all duration-500;
+  }
+}
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+.markdown-body h3 { @apply mb-2 mt-4 text-[13px] font-medium text-neon; }
+.markdown-body p { @apply mb-2 text-[13px] leading-6 text-[#a9c2b5]; }
+.markdown-body ul { @apply mb-3 list-disc space-y-1 pl-5 text-[13px] leading-6 text-[#a9c2b5]; }
+.markdown-body code { @apply rounded bg-ink-800 px-1 font-mono text-neon-soft; }
