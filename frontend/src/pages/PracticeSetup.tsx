@@ -176,7 +176,7 @@ export default function PracticeSetup() {
           {selectedBank ? '清除选择（不限题库）' : '当前：全部题库'}
         </button>
       }>
-        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           <button onClick={() => setSelectedBank('')}
             className={`rounded-lg border px-3 py-3 text-left transition ${selectedBank === '' ? 'border-neon/60 bg-neon/10' : 'border-ink-700/60 bg-ink-900/50 hover:border-ink-600'}`}>
             <div className={`text-[13px] ${selectedBank === '' ? 'text-neon' : 'text-[#d7e6dd]'}`}>全部题库</div>
@@ -184,12 +184,15 @@ export default function PracticeSetup() {
           </button>
           {banks.map((b) => {
             const on = selectedBank === b.key
+            const isAI = b.key === 'ai'
             return (
               <button key={b.key} onClick={() => setSelectedBank(b.key)}
-                className={`rounded-lg border px-3 py-3 text-left transition ${on ? 'border-neon/60 bg-neon/10' : 'border-ink-700/60 bg-ink-900/50 hover:border-ink-600'}`}>
-                <div className={`flex items-center justify-between text-[13px] ${on ? 'text-neon' : 'text-[#d7e6dd]'}`}>
+                className={`rounded-lg border px-3 py-3 text-left transition ${on ? 'border-neon/60 bg-neon/10' : isAI ? 'border-neon/30 bg-neon/5 hover:border-neon/50' : 'border-ink-700/60 bg-ink-900/50 hover:border-ink-600'}`}>
+                <div className={`flex items-center justify-between text-[13px] ${on || isAI ? 'text-neon' : 'text-[#d7e6dd]'}`}>
                   <span>{b.name}</span>
-                  <span className={`font-mono text-[11px] ${on ? 'text-neon' : 'text-steel-500'}`}>{byBank[b.key] ?? '·'}</span>
+                  <span className={`font-mono text-[11px] ${on || isAI ? 'text-neon' : 'text-steel-500'}`}>
+                    {isAI ? <><Sparkles size={12} className="inline" /> 实时</> : (byBank[b.key] ?? '·')}
+                  </span>
                 </div>
                 <div className="mt-1 text-[10px] text-steel-500">{b.desc}</div>
               </button>
@@ -332,14 +335,18 @@ export default function PracticeSetup() {
                 <RefreshCw size={11} /> {available === null ? '检测中...' : `${available} 道`}
               </span>
             </div>
-            {available !== null && available < finalCount && (
+            {selectedBank === 'ai' ? (
+              <div className="mb-3 rounded-lg border border-neon/30 bg-neon/5 px-3 py-2 text-[11px] leading-5 text-neon/90">
+                <Sparkles size={12} className="mr-1 inline" />AI 题库将按你选的知识点、难度与题型，用大模型实时生成 {finalCount} 道新题并组卷（需已配置大模型密钥）。
+              </div>
+            ) : available !== null && available < finalCount && (
               <div className="mb-3 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-[11px] leading-5 text-amber-300/90">
                 题库现有 {available} 道符合条件，不足 {finalCount} 道。开始练习时系统会按条件自动补充生成真实题目，
                 也可用下方「AI 出题」提前补足。
               </div>
             )}
             <button className="btn-primary w-full" onClick={start} disabled={busy || !selectedKps.length}>
-              <Dumbbell size={16} /> {busy ? '正在组卷...' : '开始练习'}
+              <Dumbbell size={16} /> {busy ? (selectedBank === 'ai' ? 'AI 正在出题...' : '正在组卷...') : '开始练习'}
             </button>
           </div>
 

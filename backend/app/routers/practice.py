@@ -75,24 +75,43 @@ def create_session(
 
     candidates = fetch_candidates()
     auto_generated = 0
-    shortage = payload.count - len(candidates)
-    if shortage > 0:
-        # 题量不足时，按用户选定的条件真实生成题目并写入题库，而不是虚构或报错。
-        # 优先取用户勾选的知识点；题型取首个勾选项（或默认单选），难度取首个勾选项（或默认入门）。
+
+    if valid_bank == "ai":
+        # AI 题库：完全按用户勾选的知识点/难度/题型实时生成，不等现有题库。
         qtype = payload.question_types[0] if payload.question_types else "单项选择题"
-        difficulty = payload.difficulties[0] if payload.difficulties else "入门"
+        difficulty = payload.difficulties[0] if payload.difficulties else "中等"
         generated, report = question_generator.generate_questions(
-            db, payload.knowledge_point_ids, qtype, difficulty, shortage
+            db, payload.knowledge_point_ids, qtype, difficulty, payload.count
         )
-        if generated:
-            if valid_bank:
-                # 自动补充的题目也归入当前题库，确保按题库组卷能取到新题
-                for q in generated:
-                    q["banks_json"] = json.dumps([valid_bank], ensure_ascii=False)
-            ids = question_generator.persist_questions(db, generated, user.id, "ai")
-            auto_generated = len(ids)
-            # 重新查询，把新题纳入候选
-            candidates = fetch_candidates()
+        if not generated:
+            raise HTTPException(status_code=422, detail=f"AI 未能生成有效题目：{report}")
+        for q in generated:
+            q["banks_json"] = json.dumps(["ai"], ensure_ascii=False)
+        ids = question_generator.persist_questions(db, generated, user.id, "ai")
+        candidates = [db.query(models.Question).filter(models.Question.question_id == qid).first()
+                      for qid in ids]
+        candidates = [q for q in candidates if q]
+        auto_generated = len(candidates)
+        if len(candidates) < payload.count:
+            raise HTTPException(status_code=422, detail="AI 生成题目不足，请放宽条件后重试")
+    else:
+        shortage = payload.count - len(candidates)
+        if shortage > 0:
+            # 题量不足时，按用户选定的条件真实生成题目并写入题库，而不是虚构或报错。
+            qtype = payload.question_types[0] if payload.question_types else "单项选择题"
+            difficulty = payload.difficulties[0] if payload.difficulties else "入门"
+            generated, report = question_generator.generate_questions(
+                db, payload.knowledge_point_ids, qtype, difficulty, shortage
+            )
+            if generated:
+                if valid_bank:
+                    # 自动补充的题目也归入当前题库，确保按题库组卷能取到新题
+                    for q in generated:
+                        q["banks_json"] = json.dumps([valid_bank], ensure_ascii=False)
+                question_generator.persist_questions(db, generated, user.id, "ai")
+                auto_generated = len(generated)
+                # 重新查询，把新题纳入候选
+                candidates = fetch_candidates()
     if len(candidates) < payload.count:
         raise HTTPException(
             status_code=409,

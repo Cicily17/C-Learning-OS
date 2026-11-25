@@ -76,10 +76,12 @@ def availability(payload: AvailabilityIn, db: Session = Depends(get_db),
         by_bank[b] = sum(1 for q in db.query(models.Question)
                          .filter(models.Question.status == "active").all()
                          if question_banks.in_bank(q.banks_json, b))
+    bank = payload.bank.strip() if payload.bank else ""
     return {"available": total, "bank_total": db.query(models.Question)
             .filter(models.Question.status == "active").count(),
             "by_type_all": by_type, "by_bank": by_bank,
             "banks": question_banks.BANKS,
+            "realtime": bank == "ai",  # AI 题库按需实时生成，不受现有题量限制
             "ai_enabled": True}
 
 

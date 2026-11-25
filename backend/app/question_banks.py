@@ -7,10 +7,11 @@
 import json
 
 BANKS = [
-    {"key": "leetcode", "name": "LeetCode 题库", "desc": "编程与算法实战题"},
+    {"key": "leetcode", "name": "LeetCode 题库", "desc": "官方编程与算法实战题"},
     {"key": "专升本", "name": "专升本题库", "desc": "基础概念与语法"},
     {"key": "本科", "name": "本科题库", "desc": "课程同步练习"},
     {"key": "考研", "name": "考研题库", "desc": "综合与拔高题"},
+    {"key": "ai", "name": "AI 题库", "desc": "按你的条件实时生成题目"},
 ]
 BANK_KEYS = [b["key"] for b in BANKS]
 
