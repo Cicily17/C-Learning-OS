@@ -71,7 +71,7 @@ export default function Archive() {
     <div className="space-y-5">
       <div>
         <div className="mb-1 text-[11px] tracking-[0.18em] text-neon-dim">LEARNING ARCHIVE / 学习档案</div>
-        <h1 className="text-[22px] text-[#e4f3e9]">学习档案</h1>
+        <h1 className="text-[22px] text-[#F1F5F9]">学习档案</h1>
         <p className="mt-1 text-[12px] text-steel-400">练习记录、错题与收藏均保存到数据库，刷新页面不会丢失。</p>
       </div>
 
@@ -97,7 +97,7 @@ export default function Archive() {
               {history.map((h) => (
                 <div key={h.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-ink-700/60 bg-ink-900/40 px-4 py-3 transition hover:border-neon/40">
                   <Link to={`/practice/result/${h.id}`} className="min-w-[160px] flex-1">
-                    <div className="text-[13px] text-[#d7e6dd]">练习 · {h.total_count} 题</div>
+                    <div className="text-[13px] text-[#E8EDF4]">练习 · {h.total_count} 题</div>
                     <div className="mt-1 text-[11px] text-steel-500">
                       {new Date(h.submitted_at).toLocaleString('zh-CN')}
                     </div>
@@ -134,7 +134,7 @@ export default function Archive() {
               {examHistory.map((h) => (
                 <div key={h.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-ink-700/60 bg-ink-900/40 px-4 py-3 transition hover:border-neon/40">
                   <Link to={`/exams/result/${h.id}`} className="min-w-[160px] flex-1">
-                    <div className="text-[13px] text-[#d7e6dd]">{h.paper_name}</div>
+                    <div className="text-[13px] text-[#E8EDF4]">{h.paper_name}</div>
                     <div className="mt-1 text-[11px] text-steel-500">
                       {new Date(h.submitted_at).toLocaleString('zh-CN')} · 答对 {h.correct_count} 题
                     </div>
@@ -174,11 +174,11 @@ export default function Archive() {
                     </div>
                     <span className="text-[11px] text-steel-500">错误 {w.wrong_count} 次</span>
                   </div>
-                  <div className="mb-2 whitespace-pre-wrap text-[13px] leading-6 text-[#d7e6dd]">{w.question_content}</div>
+                  <div className="mb-2 whitespace-pre-wrap text-[13px] leading-6 text-[#E8EDF4]">{w.question_content}</div>
                   {w.code_content && <pre className="code-block mb-2">{w.code_content}</pre>}
                   <div className="grid gap-2 text-[12px] sm:grid-cols-2">
                     <div className="rounded border border-ink-700/50 p-2"><span className="text-steel-500">正确答案：</span><span className="text-neon">{w.correct_answer}</span></div>
-                    <div className="rounded border border-neon/20 bg-neon/5 p-2"><span className="text-steel-500">解析：</span><span className="text-[#a9c2b5]">{w.explanation}</span></div>
+                    <div className="rounded border border-neon/20 bg-neon/5 p-2"><span className="text-steel-500">解析：</span><span className="text-[#94A3B8]">{w.explanation}</span></div>
                   </div>
                 </div>
               ))}
@@ -195,7 +195,7 @@ export default function Archive() {
                 <div key={f.id} className="flex items-center justify-between rounded-lg border border-ink-700/60 bg-ink-900/40 px-4 py-3">
                   <div className="min-w-0">
                     <div className="mb-1 text-[10px] text-steel-500">{f.target_type === 'question' ? '题目' : '知识点'}</div>
-                    <div className="truncate text-[12px] text-[#d7e6dd]">{f.title}</div>
+                    <div className="truncate text-[12px] text-[#E8EDF4]">{f.title}</div>
                   </div>
                   {f.target_type === 'knowledge_point' && (
                     <Link to={`/learning/${f.chapter_id || ''}/${f.target_id}`} className="text-[11px] text-neon hover:underline">查看</Link>
@@ -214,7 +214,7 @@ export default function Archive() {
       }>
         <div className="flex gap-3 rounded-lg border border-neon/20 bg-neon/5 p-4">
           <Lightbulb size={17} className="mt-0.5 shrink-0 text-neon" />
-          <div className="space-y-1.5 whitespace-pre-wrap text-[12px] leading-6 text-[#a9c2b5]">
+          <div className="space-y-1.5 whitespace-pre-wrap text-[12px] leading-6 text-[#94A3B8]">
             {aiAdvice ? <p>{aiAdvice}</p> : (
               <>
                 <p>优先复习错题本中出现次数较多的题目，重做时注意先独立推导再看解析。</p>

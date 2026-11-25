@@ -4,8 +4,19 @@
 
 :root {
   color-scheme: dark;
-  background: #050d0a;
-  color: #d7e6dd;
+  background: #0a0e14;
+  color: #e8edf4;
+  /* 设计 token（Astryx 语义化方法论）：功能分色，单一真相源 */
+  --bg-base: #10151c;
+  --bg-panel: #19212b;
+  --c-primary: #58eb04;
+  --c-learn: #38bdf8;
+  --c-ai: #a78bfa;
+  --c-challenge: #ffaa36;
+  --c-danger: #ff5b64;
+  --c-progress: #2dd4bf;
+  --text-primary: #e8edf4;
+  --text-secondary: #94a3b8;
 }
 
 * { box-sizing: border-box; }
@@ -13,56 +24,128 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background-color: #050d0a;
+  background-color: #10151c;
+  /* 低透明度网格 + 点阵 + 双色光晕，科技驾驶舱氛围 */
   background-image:
-    linear-gradient(rgba(141, 255, 74, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(141, 255, 74, 0.035) 1px, transparent 1px),
-    radial-gradient(ellipse at 20% 0%, rgba(29, 71, 56, 0.35), transparent 55%),
-    radial-gradient(ellipse at 85% 90%, rgba(22, 53, 42, 0.35), transparent 50%);
-  background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%;
+    linear-gradient(rgba(88, 235, 4, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(88, 235, 4, 0.035) 1px, transparent 1px),
+    radial-gradient(ellipse 60% 50% at 12% -5%, rgba(56, 189, 248, 0.10), transparent 60%),
+    radial-gradient(ellipse 50% 45% at 92% 8%, rgba(167, 139, 250, 0.10), transparent 60%),
+    radial-gradient(ellipse 55% 45% at 85% 100%, rgba(88, 235, 4, 0.07), transparent 60%),
+    radial-gradient(circle, rgba(148, 163, 184, 0.05) 1px, transparent 1px);
+  background-size: 44px 44px, 44px 44px, 100% 100%, 100% 100%, 100% 100%, 22px 22px;
+  background-attachment: fixed;
   font-family: Inter, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  color: #e8edf4;
 }
 
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: #081611; }
-::-webkit-scrollbar-thumb { background: #1d4738; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #2d6b50; }
+/* 顶部/侧栏装饰性扫描线 */
+.cyber-grid-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: linear-gradient(rgba(88, 235, 4, 0.025) 1px, transparent 1px);
+  background-size: 100% 5px;
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,0.4), transparent 40%);
+}
+
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track { background: #10151c; }
+::-webkit-scrollbar-thumb { background: #2a3543; border-radius: 6px; border: 2px solid #10151c; }
+::-webkit-scrollbar-thumb:hover { background: #3a4757; }
+
+::selection { background: rgba(88, 235, 4, 0.28); color: #e8edf4; }
 
 @layer components {
+  /* 模块化卡片：细边框 + 轻微悬浮 + 顶部高光描边 */
   .panel {
-    @apply rounded-xl border border-ink-700/70 bg-ink-850/70 backdrop-blur-sm;
-    box-shadow: 0 0 0 1px rgba(141,255,74,0.03), 0 16px 36px rgba(0,0,0,0.28);
+    @apply relative rounded-xl border border-ink-700/80 bg-ink-850/80 backdrop-blur-sm;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.02), 0 18px 40px rgba(0,0,0,0.4);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+  }
+  .panel::before {
+    content: '';
+    position: absolute;
+    left: 14px; right: 14px; top: -1px; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(88,235,4,0.35), transparent);
+    opacity: 0.7;
+  }
+  .panel:hover {
+    border-color: rgba(88, 235, 4, 0.28);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 20px 46px rgba(0,0,0,0.5), 0 0 22px rgba(88,235,4,0.06);
   }
   .panel-head {
-    @apply flex items-center justify-between border-b border-ink-700/60 px-4 py-3;
+    @apply flex items-center justify-between border-b border-ink-700/70 px-4 py-3;
   }
   .panel-title {
     @apply text-[13px] font-medium tracking-wide text-neon;
+    display: flex; align-items: center; gap: 8px;
   }
+  .panel-title::before {
+    content: '';
+    width: 3px; height: 13px; border-radius: 2px;
+    background: linear-gradient(to bottom, #58eb04, #38bdf8);
+    box-shadow: 0 0 8px rgba(88,235,4,0.5);
+  }
+
+  /* 主按钮：荧光绿，明确 hover/active/disabled 状态 */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-neon px-4 py-2 text-[13px] font-medium text-ink-950 transition hover:bg-neon-soft active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-neon px-4 py-2 text-[13px] font-semibold text-[#0a0e14] transition;
+    box-shadow: 0 0 0 1px rgba(88,235,4,0.5), 0 6px 18px rgba(88,235,4,0.18);
   }
+  .btn-primary:hover { background: #97f75e; box-shadow: 0 0 0 1px rgba(151,247,94,0.6), 0 8px 24px rgba(88,235,4,0.3); }
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-primary:disabled { cursor: not-allowed; opacity: 0.4; box-shadow: none; }
+
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-ink-600/70 bg-ink-800/50 px-4 py-2 text-[13px] text-steel-400 transition hover:border-neon/50 hover:text-neon active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-ink-600/70 bg-ink-800/50 px-4 py-2 text-[13px] text-steel-300 transition;
   }
+  .btn-ghost:hover { border-color: rgba(88,235,4,0.5); color: #58eb04; background: rgba(88,235,4,0.07); }
+  .btn-ghost:active { transform: scale(0.97); }
+  .btn-ghost:disabled { cursor: not-allowed; opacity: 0.4; }
+
   .tag {
     @apply inline-flex items-center rounded border border-ink-600/60 bg-ink-800/60 px-2 py-0.5 text-[11px] text-steel-400;
   }
   .tag-neon {
     @apply inline-flex items-center rounded border border-neon/30 bg-neon/10 px-2 py-0.5 text-[11px] text-neon;
   }
+  /* 功能色标签 */
+  .tag-learn { @apply inline-flex items-center rounded border border-learn/30 bg-learn/10 px-2 py-0.5 text-[11px] text-learn; }
+  .tag-ai { @apply inline-flex items-center rounded border border-ai/30 bg-ai/10 px-2 py-0.5 text-[11px] text-ai; }
+  .tag-challenge { @apply inline-flex items-center rounded border border-challenge/30 bg-challenge/10 px-2 py-0.5 text-[11px] text-challenge; }
+  .tag-danger { @apply inline-flex items-center rounded border border-danger/30 bg-danger/10 px-2 py-0.5 text-[11px] text-danger; }
+
   .field {
-    @apply w-full rounded-lg border border-ink-600/70 bg-ink-900/80 px-3 py-2 text-[13px] text-[#d7e6dd] outline-none transition placeholder:text-steel-500 focus:border-neon/60;
+    @apply w-full rounded-lg border border-ink-600/70 bg-ink-950/80 px-3 py-2 text-[13px] text-text-primary outline-none transition placeholder:text-steel-500;
   }
+  .field:focus { border-color: rgba(88,235,4,0.6); box-shadow: 0 0 0 3px rgba(88,235,4,0.08); }
+
+  /* IDE 代码区：深邃背景 + 等宽字体 */
   .code-block {
-    @apply overflow-x-auto rounded-lg border border-ink-700/70 bg-[#04100b] p-4 font-mono text-[12.5px] leading-6 text-[#b8d9c4];
+    @apply overflow-x-auto rounded-lg border border-ink-700/80 bg-[#0b1017] p-4 font-mono text-[12.5px] leading-6 text-[#c8d6e5];
+    box-shadow: inset 0 0 30px rgba(0,0,0,0.4);
   }
+
+  /* 科技感渐变进度条 */
   .progress-track {
-    @apply h-1.5 overflow-hidden rounded-full bg-ink-700/70;
+    @apply h-1.5 overflow-hidden rounded-full bg-ink-800;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.5);
   }
   .progress-fill {
-    @apply h-full rounded-full bg-gradient-to-r from-neon-dim to-neon transition-all duration-500;
+    @apply h-full rounded-full transition-all duration-500;
+    background: linear-gradient(90deg, #159e8c, #2dd4bf, #58eb04);
+    box-shadow: 0 0 10px rgba(45,212,191,0.45);
   }
+
+  /* 数据大字 */
+  .stat-value {
+    @apply text-[22px] font-semibold leading-none tracking-tight text-text-primary;
+  }
+
+  /* 分色装饰条 */
+  .accent-bar { @apply absolute left-0 top-0 bottom-0 w-[2px] rounded-l-xl; }
 }
 
 .sr-only {
@@ -70,7 +153,8 @@ body {
   overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
 }
 
-.markdown-body h3 { @apply mb-2 mt-4 text-[13px] font-medium text-neon; }
-.markdown-body p { @apply mb-2 text-[13px] leading-6 text-[#a9c2b5]; }
-.markdown-body ul { @apply mb-3 list-disc space-y-1 pl-5 text-[13px] leading-6 text-[#a9c2b5]; }
+/* 知识正文排版 */
+.markdown-body h3 { @apply mb-2 mt-4 text-[13px] font-medium text-learn; }
+.markdown-body p { @apply mb-2 text-[13px] leading-6 text-text-secondary; }
+.markdown-body ul { @apply mb-3 list-disc space-y-1 pl-5 text-[13px] leading-6 text-text-secondary; }
 .markdown-body code { @apply rounded bg-ink-800 px-1 font-mono text-neon-soft; }

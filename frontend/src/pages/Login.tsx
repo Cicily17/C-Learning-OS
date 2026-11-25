@@ -35,36 +35,38 @@ export default function Login() {
 
   return (
     <div className="flex min-h-screen items-center justify-center p-6">
-      <div className="grid w-full max-w-4xl overflow-hidden rounded-2xl border border-ink-700/70 bg-ink-900/80 shadow-panel md:grid-cols-2">
-        <div className="relative hidden flex-col justify-between border-r border-ink-700/60 p-9 md:flex">
-          <div className="absolute inset-0 opacity-40" style={{
-            backgroundImage: 'linear-gradient(rgba(141,255,74,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(141,255,74,0.05) 1px,transparent 1px)',
+      <div className="grid w-full max-w-4xl overflow-hidden rounded-2xl border border-ink-700/70 bg-ink-850/85 shadow-panel backdrop-blur-xl md:grid-cols-2">
+        <div className="relative hidden flex-col justify-between overflow-hidden border-r border-ink-700/60 p-9 md:flex">
+          <div className="absolute inset-0 opacity-50" style={{
+            backgroundImage: 'linear-gradient(rgba(88,235,4,0.06) 1px,transparent 1px),linear-gradient(90deg,rgba(88,235,4,0.06) 1px,transparent 1px)',
             backgroundSize: '28px 28px',
           }} />
+          <div className="pointer-events-none absolute -left-20 -top-20 h-64 w-64 rounded-full bg-learn/15 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 -right-16 h-72 w-72 rounded-full bg-ai/15 blur-3xl" />
           <div className="relative">
             <div className="mb-6 flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-neon/40 bg-neon/10">
                 <Terminal size={22} className="text-neon" />
               </div>
               <div>
-                <div className="text-[17px] font-medium text-[#e4f3e9]">C Learning OS</div>
+                <div className="text-[17px] font-medium text-[#F1F5F9]">C Learning OS</div>
                 <div className="text-[10px] tracking-[0.2em] text-steel-500">LEARNING WORKSTATION</div>
               </div>
             </div>
-            <h1 className="mb-3 text-[22px] leading-snug text-[#e4f3e9]">把 C 语言<br />变成一张可探索的地图</h1>
+            <h1 className="mb-3 text-[22px] leading-snug text-[#F1F5F9]">把 C 语言<br />变成一张可探索的地图</h1>
             <p className="text-[13px] leading-6 text-steel-400">
               知识学习、自主练习、模拟考试与学习档案，形成完整的训练闭环。所有进度真实保存。
             </p>
           </div>
           <div className="relative space-y-4">
             <div className="flex items-center gap-3 text-[12px] text-steel-400">
-              <BookOpen size={16} className="text-neon-dim" /> 75 个知识点 · 12 个章节
+              <BookOpen size={16} className="text-learn" /> 75 个知识点 · 12 个章节
             </div>
             <div className="flex items-center gap-3 text-[12px] text-steel-400">
-              <Dumbbell size={16} className="text-neon-dim" /> 123 道种子题目 · C11 标准
+              <Dumbbell size={16} className="text-challenge" /> 123 道种子题目 · C11 标准
             </div>
             <div className="flex items-center gap-3 text-[12px] text-steel-400">
-              <ShieldCheck size={16} className="text-neon-dim" /> 练习与考试权限隔离
+              <ShieldCheck size={16} className="text-neon" /> 练习与考试权限隔离
             </div>
           </div>
         </div>

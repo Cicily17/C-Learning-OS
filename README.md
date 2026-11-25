@@ -35,6 +35,8 @@ C Learning OS 不是一个静态展示页面，而是一个具备真实数据读
 
 **后端**：Python 3 / FastAPI + SQLAlchemy 1.4 + PostgreSQL + PyJWT + bcrypt
 
+**UI 视觉**：Cyberpunk + Dark Tech 风格，采用语义化设计 token 分色（荧光绿主操作 / 电光蓝学习 / 科技紫 AI / 活力橙挑战 / 警示红错误 / 科技青进度），深色网格纹理、光效卡片、IDE 语法高亮与多色数据图表。配色集中于 `frontend/tailwind.config.js` 与 `frontend/src/styles/index.css`，改色不影响业务功能。
+
 **工程**：端到端业务流测试（httpx）、自动种子数据、REST API（OpenAPI 文档）、Vite 开发代理
 
 ---

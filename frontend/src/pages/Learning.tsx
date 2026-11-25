@@ -33,7 +33,7 @@ export default function Learning() {
     <div className="space-y-5">
       <div>
         <div className="mb-1 text-[11px] tracking-[0.18em] text-neon-dim">KNOWLEDGE CENTER / 知识学习中心</div>
-        <h1 className="text-[22px] text-[#e4f3e9]">C 语言知识体系</h1>
+        <h1 className="text-[22px] text-[#F1F5F9]">C 语言知识体系</h1>
         <p className="mt-1 text-[12px] text-steel-400">共 {chapters.length} 个章节、{kps.length} 个知识点，按章节逐步推进。</p>
       </div>
 
@@ -99,7 +99,7 @@ export default function Learning() {
                         <span className="font-mono text-[10px] text-steel-500">{kp.code}</span>
                         <span className="tag">{kp.difficulty}</span>
                       </div>
-                      <div className="mb-1.5 flex items-center gap-1.5 text-[13px] text-[#d7e6dd] group-hover:text-neon">
+                      <div className="mb-1.5 flex items-center gap-1.5 text-[13px] text-[#E8EDF4] group-hover:text-neon">
                         {kp.mastered ? <CircleCheck size={14} className="text-neon" /> : <BookOpen size={14} className="text-steel-500" />}
                         {kp.name}
                       </div>

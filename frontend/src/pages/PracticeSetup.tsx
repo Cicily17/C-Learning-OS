@@ -167,7 +167,7 @@ export default function PracticeSetup() {
     <div className="space-y-5">
       <div>
         <div className="mb-1 text-[11px] tracking-[0.18em] text-neon-dim">PRACTICE CENTER / 智能练习中心</div>
-        <h1 className="text-[22px] text-[#e4f3e9]">配置你的练习</h1>
+        <h1 className="text-[22px] text-[#F1F5F9]">配置你的练习</h1>
         <p className="mt-1 text-[12px] text-steel-400">先选择题库，再选知识点与条件，系统从该题库真实组卷；题目不足时自动补足。</p>
       </div>
 
@@ -179,7 +179,7 @@ export default function PracticeSetup() {
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           <button onClick={() => setSelectedBank('')}
             className={`rounded-lg border px-3 py-3 text-left transition ${selectedBank === '' ? 'border-neon/60 bg-neon/10' : 'border-ink-700/60 bg-ink-900/50 hover:border-ink-600'}`}>
-            <div className={`text-[13px] ${selectedBank === '' ? 'text-neon' : 'text-[#d7e6dd]'}`}>全部题库</div>
+            <div className={`text-[13px] ${selectedBank === '' ? 'text-neon' : 'text-[#E8EDF4]'}`}>全部题库</div>
             <div className="mt-1 text-[10px] text-steel-500">跨所有题库组卷</div>
           </button>
           {banks.map((b) => {
@@ -188,7 +188,7 @@ export default function PracticeSetup() {
             return (
               <button key={b.key} onClick={() => setSelectedBank(b.key)}
                 className={`rounded-lg border px-3 py-3 text-left transition ${on ? 'border-neon/60 bg-neon/10' : isAI ? 'border-neon/30 bg-neon/5 hover:border-neon/50' : 'border-ink-700/60 bg-ink-900/50 hover:border-ink-600'}`}>
-                <div className={`flex items-center justify-between text-[13px] ${on || isAI ? 'text-neon' : 'text-[#d7e6dd]'}`}>
+                <div className={`flex items-center justify-between text-[13px] ${on || isAI ? 'text-neon' : 'text-[#E8EDF4]'}`}>
                   <span>{b.name}</span>
                   <span className={`font-mono text-[11px] ${on || isAI ? 'text-neon' : 'text-steel-500'}`}>
                     {isAI ? <><Sparkles size={12} className="inline" /> 实时</> : (byBank[b.key] ?? '·')}
@@ -227,7 +227,7 @@ export default function PracticeSetup() {
                     <button className="flex flex-1 items-center gap-2 text-left" onClick={() => setExpanded((p) => isOpen ? p.filter((x) => x !== ch.id) : [...p, ch.id])}>
                       {isOpen ? <ChevronDown size={14} className="text-steel-500" /> : <ChevronRight size={14} className="text-steel-500" />}
                       <span className="font-mono text-[10px] text-steel-500">{ch.code}</span>
-                      <span className="text-[12px] text-[#d7e6dd]">{ch.name}</span>
+                      <span className="text-[12px] text-[#E8EDF4]">{ch.name}</span>
                       <span className="text-[10px] text-steel-500">({selectedCount}/{list.length})</span>
                     </button>
                     <button className="rounded border border-ink-600/60 px-2 py-1 text-[10px] text-steel-400 transition hover:border-neon/50 hover:text-neon"
@@ -331,7 +331,7 @@ export default function PracticeSetup() {
             </div>
             <div className="mb-3 flex items-center justify-between rounded-lg border border-ink-700/60 bg-ink-900/50 px-3 py-2 text-[11px]">
               <span className="text-steel-500">当前条件可用题目</span>
-              <span className={`flex items-center gap-1 ${available === null ? 'text-steel-500' : available >= finalCount ? 'text-neon' : 'text-amber-400'}`}>
+              <span className={`flex items-center gap-1 ${available === null ? 'text-steel-500' : available >= finalCount ? 'text-neon' : 'text-challenge'}`}>
                 <RefreshCw size={11} /> {available === null ? '检测中...' : `${available} 道`}
               </span>
             </div>
@@ -340,7 +340,7 @@ export default function PracticeSetup() {
                 <Sparkles size={12} className="mr-1 inline" />AI 题库将按你选的知识点、难度与题型，用大模型实时生成 {finalCount} 道新题并组卷（需已配置大模型密钥）。
               </div>
             ) : available !== null && available < finalCount && (
-              <div className="mb-3 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-[11px] leading-5 text-amber-300/90">
+              <div className="mb-3 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-[11px] leading-5 text-challenge-soft/90">
                 题库现有 {available} 道符合条件，不足 {finalCount} 道。开始练习时系统会按条件自动补充生成真实题目，
                 也可用下方「AI 出题」提前补足。
               </div>

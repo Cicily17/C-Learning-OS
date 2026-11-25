@@ -63,7 +63,7 @@ export default function AiAssistant() {
     <div className="space-y-5">
       <div>
         <div className="mb-1 text-[11px] tracking-[0.18em] text-neon-dim">AI ASSISTANT / 智能学习助手</div>
-        <h1 className="text-[22px] text-[#e4f3e9]">AI 学习助手与代码实验室</h1>
+        <h1 className="text-[22px] text-[#F1F5F9]">AI 学习助手与代码实验室</h1>
         <p className="mt-1 text-[12px] text-steel-400">
           助手支持概念解释、代码分析、编译错误解读；代码运行采用受限 C 子集解释器，不会执行任意二进制。
         </p>
@@ -97,7 +97,7 @@ export default function AiAssistant() {
                 <div className={`max-w-[88%] whitespace-pre-wrap rounded-lg border px-3 py-2 text-[12px] leading-6 ${
                   m.role === 'user' ? 'border-neon/30 bg-neon/10 text-neon'
                   : m.source === 'error' ? 'border-red-500/30 bg-red-500/5 text-red-200'
-                  : 'border-ink-700/60 bg-ink-900/60 text-[#c3d8cc]'
+                  : 'border-ink-700/60 bg-ink-900/60 text-[#CBD5E1]'
                 }`}>
                   {m.role === 'ai' && <div className="mb-1 text-[10px] text-steel-500">{m.source === 'llm' ? 'AI 生成' : '内置规则引擎'}</div>}
                   {m.text}
@@ -153,7 +153,7 @@ export default function AiAssistant() {
                   {runResult.ok ? <CheckCircle2 size={13} /> : <AlertTriangle size={13} />}
                   {runResult.ok ? `执行成功 · 退出码 ${runResult.exit_code}` : `执行未完成 · ${runResult.message || '请检查代码'}`}
                 </div>
-                {runResult.stdout && <pre className="whitespace-pre-wrap font-mono text-[#b8d9c4]">{runResult.stdout}</pre>}
+                {runResult.stdout && <pre className="whitespace-pre-wrap font-mono text-[#C8D6E5]">{runResult.stdout}</pre>}
                 <div className="border-t border-ink-700/50 pt-2 text-[10px] text-steel-500">
                   编译检查：{typeof runResult.compile_check === 'string' ? runResult.compile_check.slice(0, 300) : '通过'}
                 </div>

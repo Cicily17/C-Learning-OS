@@ -20,12 +20,12 @@ export default function PracticeResult() {
     <div className="space-y-5">
       <div>
         <div className="mb-1 text-[11px] tracking-[0.18em] text-neon-dim">PRACTICE RESULT / 练习结果</div>
-        <h1 className="text-[22px] text-[#e4f3e9]">本次练习已完成</h1>
+        <h1 className="text-[22px] text-[#F1F5F9]">本次练习已完成</h1>
         <p className="mt-1 text-[12px] text-steel-400">提交于 {new Date(data.submitted_at).toLocaleString('zh-CN')}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <div className="panel p-4"><div className="text-[11px] text-steel-500">总题数</div><div className="mt-2 text-[24px] text-[#e4f3e9]">{data.total_count}</div></div>
+        <div className="panel p-4"><div className="text-[11px] text-steel-500">总题数</div><div className="mt-2 text-[24px] text-[#F1F5F9]">{data.total_count}</div></div>
         <div className="panel p-4"><div className="text-[11px] text-steel-500">答对</div><div className="mt-2 text-[24px] text-neon">{data.correct_count}</div></div>
         <div className="panel p-4"><div className="text-[11px] text-steel-500">正确率</div><div className="mt-2 text-[24px] text-neon">{acc}%</div></div>
         <div className="panel p-4"><div className="text-[11px] text-steel-500">答错</div><div className="mt-2 text-[24px] text-red-300">{data.total_count - data.correct_count}</div></div>
@@ -45,7 +45,7 @@ export default function PracticeResult() {
                 </div>
                 <span className="font-mono text-[10px] text-steel-500">{item.question_id}</span>
               </div>
-              <div className="mb-3 whitespace-pre-wrap text-[13px] leading-6 text-[#d7e6dd]">{item.question_content}</div>
+              <div className="mb-3 whitespace-pre-wrap text-[13px] leading-6 text-[#E8EDF4]">{item.question_content}</div>
               {item.code_content && <pre className="code-block mb-3">{item.code_content}</pre>}
               <div className="grid gap-2 text-[12px] sm:grid-cols-2">
                 <div className="rounded border border-ink-700/50 bg-ink-950/50 p-2.5">
@@ -56,7 +56,7 @@ export default function PracticeResult() {
                   <span className="text-steel-500">正确答案：</span><span className="text-neon">{item.correct_answer}</span>
                 </div>
               </div>
-              <div className="mt-3 rounded border border-ink-700/50 bg-ink-950/40 p-3 text-[12px] leading-6 text-[#a9c2b5]">
+              <div className="mt-3 rounded border border-ink-700/50 bg-ink-950/40 p-3 text-[12px] leading-6 text-[#94A3B8]">
                 <span className="mr-2 text-neon">解析：</span>{item.explanation}
               </div>
             </div>

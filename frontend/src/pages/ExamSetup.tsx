@@ -91,7 +91,7 @@ export default function ExamSetup() {
     <div className="space-y-5">
       <div>
         <div className="mb-1 text-[11px] tracking-[0.18em] text-neon-dim">EXAM CENTER / 模拟考试中心</div>
-        <h1 className="text-[22px] text-[#e4f3e9]">配置模拟考试</h1>
+        <h1 className="text-[22px] text-[#F1F5F9]">配置模拟考试</h1>
         <p className="mt-1 text-[12px] text-steel-400">
           试卷由服务端自动组卷，答案封存在服务端。考试期间不提供提示、答案、解析、正确率与分数。
         </p>
@@ -116,7 +116,7 @@ export default function ExamSetup() {
             </div>
             <div className="rounded-lg border border-ink-700/60 bg-ink-900/30">
               <div className="flex items-center justify-between border-b border-ink-700/50 px-3 py-2">
-                <span className="text-[12px] text-[#c3d8cc]">细分到知识点（可选，留空表示按章节全范围）</span>
+                <span className="text-[12px] text-[#CBD5E1]">细分到知识点（可选，留空表示按章节全范围）</span>
                 <span className="text-[11px] text-neon">已选 {selectedKps.length}</span>
               </div>
               <div className="max-h-[280px] space-y-1 overflow-y-auto p-2">
@@ -160,7 +160,7 @@ export default function ExamSetup() {
             <div className="space-y-1.5">
               {TYPES.map((type) => (
                 <div key={type} className="grid grid-cols-[1fr_90px_90px] items-center gap-2 rounded-lg border border-ink-700/50 bg-ink-900/30 px-3 py-2">
-                  <span className="text-[12px] text-[#c3d8cc]">{type}</span>
+                  <span className="text-[12px] text-[#CBD5E1]">{type}</span>
                   <label className="flex items-center gap-1 text-[10px] text-steel-500">
                     题数
                     <input type="number" min="0" max="50" className="field w-16 px-2 py-1 text-[12px]"
@@ -221,7 +221,7 @@ export default function ExamSetup() {
           </Panel>
 
           <Panel title="考试须知">
-            <div className="space-y-2 text-[11px] leading-6 text-[#a9c2b5]">
+            <div className="space-y-2 text-[11px] leading-6 text-[#94A3B8]">
               <p>· 考试过程中不会显示答案、解析、正确率与分数。</p>
               <p>· 所有作答自动保存，倒计时结束自动交卷。</p>
               <p>· 交卷后记录锁定，无法二次提交。</p>
@@ -250,7 +250,7 @@ export default function ExamSetup() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
           <div className="panel w-full max-w-lg p-6">
             <div className="mb-4 flex items-center gap-2 text-neon"><ShieldAlert size={18} /> 考试须知确认</div>
-            <div className="space-y-2 text-[13px] leading-7 text-[#c3d8cc]">
+            <div className="space-y-2 text-[13px] leading-7 text-[#CBD5E1]">
               <p>本场考试共 <span className="text-neon">{count}</span> 题，总分 <span className="text-neon">{totalScore}</span>，时长 <span className="text-neon">{finalDuration}</span> 分钟。</p>
               <p>开始后计时立即启动。考试中不可查看提示、答案、解析、正确率和分数；交卷后方可查看考试报告。</p>
               <p className="text-[11px] text-amber-400">请确认已做好考试准备。</p>

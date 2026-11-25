@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, BookOpen, Dumbbell, ClipboardList, Gamepad2,
   Archive, Settings, Terminal, LogOut, Radio, Star, Sparkles,
+  Bell, Flame, Coins, ShieldCheck,
 } from 'lucide-react'
 import type { User } from '../types'
 import type { ToastMessage } from '../types'
@@ -14,14 +15,22 @@ export function useToast() {
   return useContext(ToastContext)
 }
 
+// 每个模块拥有独立的功能色识别（Astryx 语义分色：颜色承担功能区分，不只是装饰）
 const navItems = [
-  { to: '/', label: '学习工作台', icon: LayoutDashboard, end: true },
-  { to: '/learning', label: '知识学习', icon: BookOpen },
-  { to: '/practice/setup', label: '智能练习', icon: Dumbbell },
-  { to: '/exams', label: '模拟考试', icon: ClipboardList },
-  { to: '/game/map', label: '闯关地图', icon: Gamepad2 },
-  { to: '/ai', label: 'AI 助手', icon: Sparkles },
-  { to: '/archive', label: '学习档案', icon: Archive },
+  { to: '/', label: '学习工作台', icon: LayoutDashboard, end: true,
+    on: 'border-neon/40 bg-neon/10 text-neon shadow-glow-green', glow: 'bg-neon' },
+  { to: '/learning', label: '知识课堂', icon: BookOpen,
+    on: 'border-learn/40 bg-learn/10 text-learn shadow-glow-blue', glow: 'bg-learn' },
+  { to: '/practice/setup', label: '编程练习', icon: Dumbbell,
+    on: 'border-progress/40 bg-progress/10 text-progress', glow: 'bg-progress' },
+  { to: '/exams', label: '模拟考试', icon: ClipboardList,
+    on: 'border-challenge/40 bg-challenge/10 text-challenge shadow-glow-orange', glow: 'bg-challenge' },
+  { to: '/game/map', label: '闯关地图', icon: Gamepad2,
+    on: 'border-challenge/40 bg-challenge/10 text-challenge', glow: 'bg-challenge' },
+  { to: '/ai', label: 'AI 助手', icon: Sparkles,
+    on: 'border-ai/40 bg-ai/10 text-ai shadow-glow-purple', glow: 'bg-ai' },
+  { to: '/archive', label: '学习档案', icon: Archive,
+    on: 'border-progress/40 bg-progress/10 text-progress', glow: 'bg-progress' },
 ]
 
 export function ToastProvider({ children }: { children: ReactNode }) {
@@ -38,11 +47,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`panel px-4 py-3 text-[13px] ${
-              t.kind === 'error' ? 'border-red-500/50 text-red-300'
-              : t.kind === 'success' ? 'border-neon/50 text-neon'
-              : 'border-steel-600/60 text-[#c3d8cc]'
+            className={`animate-fade-up rounded-lg border px-4 py-3 text-[13px] backdrop-blur-md ${
+              t.kind === 'error' ? 'border-danger/50 bg-danger/10 text-danger'
+              : t.kind === 'success' ? 'border-neon/50 bg-neon/10 text-neon'
+              : 'border-learn/40 bg-ink-850/90 text-steel-300'
             }`}
+            style={{ boxShadow: '0 12px 34px rgba(0,0,0,0.5)' }}
           >
             {t.text}
           </div>
@@ -63,81 +73,119 @@ export function Layout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-[220px_1fr]">
-      <aside className="hidden min-h-screen flex-col border-r border-ink-700/60 bg-ink-900/70 px-3 py-5 lg:flex">
-        <div className="mb-7 flex items-center gap-2 px-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-neon/40 bg-neon/10">
-            <Terminal size={18} className="text-neon" />
+    <div className="relative min-h-screen lg:grid lg:grid-cols-[236px_1fr]">
+      <div className="cyber-grid-overlay" />
+      {/* 左侧固定导航 */}
+      <aside className="relative z-10 hidden min-h-screen flex-col border-r border-ink-700/70 bg-ink-950/85 px-3 py-5 backdrop-blur-xl lg:flex">
+        {/* 品牌 / 终端标识 */}
+        <div className="mb-8 flex items-center gap-3 px-2">
+          <div className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-neon/50 bg-neon/10">
+            <Terminal size={19} className="text-neon" />
+            <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-neon shadow-glow-green animate-pulse-soft" />
           </div>
           <div>
-            <div className="text-[14px] font-medium tracking-wide text-[#e4f3e9]">C Learning OS</div>
-            <div className="text-[10px] tracking-[0.18em] text-steel-500">LEARNING WORKSTATION</div>
+            <div className="text-[15px] font-semibold tracking-wide text-text-primary">C Learning OS</div>
+            <div className="mt-0.5 text-[9px] tracking-[0.22em] text-steel-500">LEARNING WORKSTATION</div>
           </div>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-1">
+        <div className="mb-3 px-3 text-[9px] font-medium tracking-[0.2em] text-steel-600">主控制台 / MAIN</div>
+        <nav className="flex flex-1 flex-col gap-1.5">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `group flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] transition ${
+                `group relative flex items-center gap-3 rounded-lg border px-3 py-2.5 text-[13px] transition-all duration-200 ${
                   isActive
-                    ? 'border border-neon/30 bg-neon/10 text-neon'
-                    : 'border border-transparent text-steel-400 hover:border-ink-600/60 hover:bg-ink-800/50 hover:text-[#d7e6dd]'
+                    ? item.on
+                    : 'border-transparent text-steel-400 hover:border-ink-600/70 hover:bg-ink-800/60 hover:text-text-primary'
                 }`
               }
             >
-              <item.icon size={16} />
-              <span>{item.label}</span>
+              {({ isActive }) => (
+                <>
+                  <span className={`absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full transition-opacity ${item.glow} ${isActive ? 'opacity-100 shadow-glow' : 'opacity-0'}`} />
+                  <item.icon size={17} strokeWidth={1.8} />
+                  <span>{item.label}</span>
+                  {isActive && <span className="ml-auto text-[9px] opacity-70">▸</span>}
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
 
-        <div className="mt-4 space-y-2 border-t border-ink-700/60 pt-4">
-          <div className="flex items-center gap-2 px-2 text-[11px] text-steel-500">
-            <Radio size={12} className="text-neon-dim" />
-            SYSTEM ONLINE · C11
+        <div className="mt-4 space-y-3 border-t border-ink-700/70 pt-4">
+          <div className="flex items-center gap-2 px-2 text-[10px] tracking-wide text-steel-500">
+            <Radio size={12} className="text-neon animate-pulse-soft" />
+            <span>SYSTEM ONLINE · C11</span>
           </div>
-          <button onClick={logout} className="btn-ghost w-full justify-start">
+          <button onClick={logout} className="btn-ghost w-full justify-start border-danger/30 hover:border-danger/60 hover:text-danger">
             <LogOut size={15} /> 退出登录
           </button>
         </div>
       </aside>
 
-      <div className="min-w-0">
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-ink-700/60 bg-ink-950/90 px-5 py-3 backdrop-blur">
+      <div className="relative z-10 min-w-0">
+        {/* 顶部状态栏 */}
+        <header className="sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-ink-700/70 bg-ink-950/90 px-5 py-3 backdrop-blur-xl">
           <div className="flex items-center gap-3 lg:hidden">
             <Terminal size={18} className="text-neon" />
-            <span className="text-[13px] text-neon">C Learning OS</span>
+            <span className="text-[13px] font-medium text-neon">C Learning OS</span>
           </div>
-          <div className="hidden items-center gap-2 text-[11px] text-steel-500 lg:flex">
-            <span className="h-1.5 w-1.5 rounded-full bg-neon shadow-glow" />
+          <div className="hidden items-center gap-2 text-[11px] text-steel-500 xl:flex">
+            <span className="h-1.5 w-1.5 rounded-full bg-neon shadow-glow-green animate-pulse-soft" />
             学习终端已连接
             <span className="mx-2 text-ink-600">/</span>
-            <span>当前标准 C11</span>
+            <ShieldCheck size={12} className="text-progress" />
+            <span>当前标准 C11 · 服务端判分</span>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="hidden items-center gap-1.5 rounded-full border border-neon/25 bg-neon/5 px-3 py-1 text-[11px] text-neon sm:flex">
-              <Star size={12} /> Lv.{user.level || 1} · {user.exp || 0} EXP
+
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* 等级 */}
+            <div className="hidden items-center gap-1.5 rounded-full border border-challenge/30 bg-challenge/10 px-3 py-1 text-[11px] font-medium text-challenge sm:flex">
+              <Star size={12} /> Lv.{user.level || 1}
             </div>
-            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-steel-600/60 bg-ink-800 text-[12px] text-[#cfe3d6]">
-              {(user.username || 'U').slice(0, 1).toUpperCase()}
+            {/* EXP 经验值 */}
+            <div className="hidden items-center gap-1.5 rounded-full border border-learn/30 bg-learn/10 px-3 py-1 text-[11px] text-learn md:flex">
+              <Sparkles size={12} /> {user.exp || 0} EXP
             </div>
-            <span className="text-[12px] text-[#c3d8cc]">{user.username || '学员'}</span>
+            {/* 连续学习天数 */}
+            <div className="hidden items-center gap-1.5 rounded-full border border-danger/30 bg-danger/10 px-3 py-1 text-[11px] text-danger md:flex">
+              <Flame size={12} /> {user.streak_days || 0} 天
+            </div>
+            {/* 积分（以 EXP 为学习积分） */}
+            <div className="hidden items-center gap-1.5 rounded-full border border-progress/30 bg-progress/10 px-3 py-1 text-[11px] text-progress lg:flex">
+              <Coins size={12} /> {user.exp || 0}
+            </div>
+            {/* 通知 / 设置 */}
+            <button aria-label="通知" title="通知中心" className="hidden h-8 w-8 items-center justify-center rounded-lg border border-ink-600/60 bg-ink-800/50 text-steel-400 transition hover:border-ai/50 hover:text-ai sm:flex">
+              <Bell size={15} />
+            </button>
+            <button aria-label="设置" title="设置" onClick={() => navigate('/archive')} className="hidden h-8 w-8 items-center justify-center rounded-lg border border-ink-600/60 bg-ink-800/50 text-steel-400 transition hover:border-neon/50 hover:text-neon sm:flex">
+              <Settings size={15} />
+            </button>
+            {/* 用户头像 */}
+            <div className="flex items-center gap-2 border-l border-ink-700/70 pl-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full border border-ai/40 bg-gradient-to-br from-ai/25 to-learn/20 text-[12px] font-semibold text-text-primary">
+                {(user.username || 'U').slice(0, 1).toUpperCase()}
+              </div>
+              <span className="hidden text-[12px] text-text-primary sm:inline">{user.username || '学员'}</span>
+            </div>
           </div>
         </header>
 
-        <nav className="flex gap-1 overflow-x-auto border-b border-ink-700/50 px-4 py-2 lg:hidden">
+        {/* 移动端横向导航 */}
+        <nav className="flex gap-1.5 overflow-x-auto border-b border-ink-700/60 bg-ink-950/70 px-4 py-2 lg:hidden">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `whitespace-nowrap rounded px-3 py-1.5 text-[12px] ${
-                  isActive ? 'bg-neon/10 text-neon' : 'text-steel-400'
+                `whitespace-nowrap rounded-md border px-3 py-1.5 text-[12px] transition ${
+                  isActive ? item.on : 'border-transparent text-steel-400'
                 }`
               }
             >

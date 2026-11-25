@@ -29,27 +29,36 @@ export default function Dashboard() {
       grid: { left: 34, right: 16, top: 20, bottom: 26 },
       tooltip: {
         trigger: 'axis',
-        backgroundColor: '#0b1d16',
-        borderColor: '#1d4738',
-        textStyle: { color: '#d7e6dd', fontSize: 12 },
+        backgroundColor: '#19212B',
+        borderColor: '#2A3543',
+        textStyle: { color: '#E8EDF4', fontSize: 12 },
       },
       xAxis: {
         type: 'category',
         data: data.trend.map((t: any) => t.date),
-        axisLine: { lineStyle: { color: '#1d4738' } },
-        axisLabel: { color: '#5d756b', fontSize: 11 },
+        axisLine: { lineStyle: { color: '#2A3543' } },
+        axisLabel: { color: '#64748B', fontSize: 11 },
       },
       yAxis: {
         type: 'value', min: 0, max: 100,
-        splitLine: { lineStyle: { color: 'rgba(29,71,56,0.55)' } },
-        axisLabel: { color: '#5d756b', fontSize: 11, formatter: '{value}%' },
+        splitLine: { lineStyle: { color: 'rgba(42,53,67,0.55)' } },
+        axisLabel: { color: '#64748B', fontSize: 11, formatter: '{value}%' },
       },
       series: [{
-        type: 'line', smooth: true, symbolSize: 6,
+        name: '正确率', type: 'line', smooth: true, symbolSize: 7,
         data: data.trend.map((t: any) => t.value),
-        lineStyle: { color: '#8dff4a', width: 2 },
-        itemStyle: { color: '#8dff4a' },
-        areaStyle: { color: 'rgba(141,255,74,0.12)' },
+        lineStyle: { color: '#58EB04', width: 2.5, shadowColor: 'rgba(88,235,4,0.5)', shadowBlur: 10 },
+        itemStyle: { color: '#2DD4BF', borderColor: '#58EB04', borderWidth: 1.5 },
+        areaStyle: {
+          color: {
+            type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+            colorStops: [
+              { offset: 0, color: 'rgba(88,235,4,0.28)' },
+              { offset: 0.55, color: 'rgba(45,212,191,0.12)' },
+              { offset: 1, color: 'rgba(45,212,191,0)' },
+            ],
+          },
+        },
       }],
     })
     const resize = () => chart.resize()
@@ -60,15 +69,16 @@ export default function Dashboard() {
   if (loading) return <div className="panel p-8 text-[13px] text-steel-400">正在读取学习数据...</div>
   if (!data) return <div className="panel p-8 text-[13px] text-red-300">数据加载失败，请刷新重试。</div>
 
+  // 每张数据卡按功能语义分配独立强调色（Astryx 语义分色）
   const stats = [
-    { label: '当前等级', value: `Lv.${data.user.level}`, sub: `${data.user.exp} EXP`, icon: Award },
-    { label: '累计学习时长', value: `${Math.round(data.user.total_study_seconds / 60)}`, sub: '分钟', icon: Clock3 },
-    { label: '累计完成题目', value: data.total_practice, sub: '套练习', icon: Dumbbell },
-    { label: '连续学习天数', value: data.user.streak_days, sub: '天', icon: Flame },
-    { label: '知识点掌握率', value: `${data.mastery_rate}%`, sub: `${data.studied_kp_count}/${data.total_kp_count}`, icon: Target },
-    { label: '平均正确率', value: `${Math.round(data.avg_accuracy * 100)}%`, sub: '练习与考试', icon: Activity },
-    { label: '待复习错题', value: data.wrong_count, sub: '道', icon: AlertTriangle },
-    { label: '历史考试', value: data.total_exam, sub: '场', icon: BookOpen },
+    { label: '当前等级', value: `Lv.${data.user.level}`, sub: `${data.user.exp} EXP`, icon: Award, c: 'text-challenge', b: 'border-challenge/30', bg: 'bg-challenge/10', bar: 'bg-challenge' },
+    { label: '累计学习时长', value: `${Math.round(data.user.total_study_seconds / 60)}`, sub: '分钟', icon: Clock3, c: 'text-learn', b: 'border-learn/30', bg: 'bg-learn/10', bar: 'bg-learn' },
+    { label: '累计完成题目', value: data.total_practice, sub: '套练习', icon: Dumbbell, c: 'text-neon', b: 'border-neon/30', bg: 'bg-neon/10', bar: 'bg-neon' },
+    { label: '连续学习天数', value: data.user.streak_days, sub: '天', icon: Flame, c: 'text-danger', b: 'border-danger/30', bg: 'bg-danger/10', bar: 'bg-danger' },
+    { label: '知识点掌握率', value: `${data.mastery_rate}%`, sub: `${data.studied_kp_count}/${data.total_kp_count}`, icon: Target, c: 'text-progress', b: 'border-progress/30', bg: 'bg-progress/10', bar: 'bg-progress' },
+    { label: '平均正确率', value: `${Math.round(data.avg_accuracy * 100)}%`, sub: '练习与考试', icon: Activity, c: 'text-learn', b: 'border-learn/30', bg: 'bg-learn/10', bar: 'bg-learn' },
+    { label: '待复习错题', value: data.wrong_count, sub: '道', icon: AlertTriangle, c: 'text-danger', b: 'border-danger/30', bg: 'bg-danger/10', bar: 'bg-danger' },
+    { label: '历史考试', value: data.total_exam, sub: '场', icon: BookOpen, c: 'text-ai', b: 'border-ai/30', bg: 'bg-ai/10', bar: 'bg-ai' },
   ]
 
   return (
@@ -76,7 +86,7 @@ export default function Dashboard() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="mb-1 text-[11px] tracking-[0.18em] text-neon-dim">DASHBOARD / 学习工作台</div>
-          <h1 className="text-[22px] text-[#e4f3e9]">欢迎回来，{data.user.username}</h1>
+          <h1 className="text-[22px] text-[#F1F5F9]">欢迎回来，{data.user.username}</h1>
           <p className="mt-1 text-[12px] text-steel-400">这里是你的学习状态总览，所有数据来自真实学习记录。</p>
         </div>
         <Link to="/practice/setup" className="btn-primary">
@@ -86,12 +96,15 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {stats.map((s) => (
-          <div key={s.label} className="panel p-4">
+          <div key={s.label} className={`panel overflow-hidden p-4 ${s.b}`}>
+            <span className={`accent-bar ${s.bar}`} />
             <div className="mb-3 flex items-center justify-between">
               <span className="text-[11px] text-steel-500">{s.label}</span>
-              <s.icon size={15} className="text-neon-dim" />
+              <span className={`flex h-7 w-7 items-center justify-center rounded-md border ${s.b} ${s.bg}`}>
+                <s.icon size={15} className={s.c} />
+              </span>
             </div>
-            <div className="text-[22px] leading-none text-[#e4f3e9]">{s.value}</div>
+            <div className={`text-[23px] font-semibold leading-none tracking-tight ${s.c}`}>{s.value}</div>
             <div className="mt-1.5 text-[11px] text-steel-500">{s.sub}</div>
           </div>
         ))}
@@ -117,11 +130,11 @@ export default function Dashboard() {
             <div className="grid grid-cols-2 gap-3 pt-2">
               <div className="rounded-lg border border-ink-700/60 bg-ink-900/50 p-3">
                 <div className="text-[11px] text-steel-500">已完成练习</div>
-                <div className="mt-1 text-[19px] text-[#d7e6dd]">{data.total_practice}</div>
+                <div className="mt-1 text-[19px] text-[#E8EDF4]">{data.total_practice}</div>
               </div>
               <div className="rounded-lg border border-ink-700/60 bg-ink-900/50 p-3">
                 <div className="text-[11px] text-steel-500">待复习错题</div>
-                <div className="mt-1 text-[19px] text-[#d7e6dd]">{data.wrong_count}</div>
+                <div className="mt-1 text-[19px] text-[#E8EDF4]">{data.wrong_count}</div>
               </div>
             </div>
             <div className="border-t border-ink-700/50 pt-3">
@@ -142,7 +155,7 @@ export default function Dashboard() {
           {lastExam ? (
             <div className="flex items-center justify-between rounded-lg border border-neon/20 bg-neon/5 p-4">
               <div>
-                <div className="text-[13px] text-[#d7e6dd]">{lastExam.paper_name}</div>
+                <div className="text-[13px] text-[#E8EDF4]">{lastExam.paper_name}</div>
                 <div className="mt-1 text-[11px] text-steel-500">
                   {new Date(lastExam.submitted_at).toLocaleString('zh-CN')} · 答对 {lastExam.correct_count} 题
                 </div>
@@ -164,7 +177,7 @@ export default function Dashboard() {
               {dailyTasks.map((t) => (
                 <div key={t.code}>
                   <div className="mb-1 flex justify-between text-[11px]">
-                    <span className={t.completed ? 'text-neon' : 'text-[#c3d8cc]'}>{t.title}</span>
+                    <span className={t.completed ? 'text-neon' : 'text-[#CBD5E1]'}>{t.title}</span>
                     <span className="text-steel-500">{t.progress}/{t.target} · +{t.exp_reward} EXP</span>
                   </div>
                   <ProgressBar value={(t.progress / t.target) * 100} />
@@ -181,7 +194,7 @@ export default function Dashboard() {
           <div className="space-y-2">
             {data.recent_records.map((r: any) => (
               <div key={r.id} className="flex items-center justify-between rounded-lg border border-ink-700/50 bg-ink-900/40 px-3 py-2.5">
-                <div className="flex items-center gap-2 text-[12px] text-[#c3d8cc]">
+                <div className="flex items-center gap-2 text-[12px] text-[#CBD5E1]">
                   <CircleCheck size={14} className="text-neon-dim" />
                   {r.type === 'kp_study' ? '学习知识点' : r.type === 'practice' ? '完成一次练习' : '完成一次考试'}
                 </div>

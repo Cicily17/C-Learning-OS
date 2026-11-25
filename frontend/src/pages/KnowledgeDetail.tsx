@@ -83,7 +83,7 @@ export default function KnowledgeDetail() {
             <span className="tag">{kp.difficulty}</span>
             {kp.mastered && <span className="tag-neon">已掌握</span>}
           </div>
-          <h1 className="mt-2 text-[22px] text-[#e4f3e9]">{kp.name}</h1>
+          <h1 className="mt-2 text-[22px] text-[#F1F5F9]">{kp.name}</h1>
           <p className="mt-1 max-w-3xl text-[12px] leading-6 text-steel-400">{kp.summary}</p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -125,7 +125,7 @@ export default function KnowledgeDetail() {
                 {lines.map((l: any, i: number) => (
                   <div key={i} className="flex gap-3 rounded border border-ink-700/50 bg-ink-900/40 px-3 py-1.5 text-[12px]">
                     <span className="font-mono text-[11px] text-neon-dim">{typeof l === 'string' ? i + 1 : l.line}</span>
-                    <span className="text-[#a9c2b5]">{typeof l === 'string' ? l : l.text}</span>
+                    <span className="text-[#94A3B8]">{typeof l === 'string' ? l : l.text}</span>
                   </div>
                 ))}
               </div>
@@ -138,7 +138,7 @@ export default function KnowledgeDetail() {
             {errors.length ? (
               <ul className="space-y-2">
                 {errors.map((e, i) => (
-                  <li key={i} className="flex gap-2 text-[12px] leading-6 text-[#a9c2b5]">
+                  <li key={i} className="flex gap-2 text-[12px] leading-6 text-[#94A3B8]">
                     <AlertTriangle size={14} className="mt-1 shrink-0 text-amber-400" /> {e}
                   </li>
                 ))}
@@ -146,7 +146,7 @@ export default function KnowledgeDetail() {
             ) : <p className="text-[12px] text-steel-500">暂无记录</p>}
           </Panel>
           <Panel title="学习提示">
-            <div className="space-y-3 text-[12px] leading-6 text-[#a9c2b5]">
+            <div className="space-y-3 text-[12px] leading-6 text-[#94A3B8]">
               <div className="flex gap-2"><Lightbulb size={14} className="mt-1 shrink-0 text-neon" />建议先阅读核心概念，再对照代码逐行理解执行过程。</div>
               <div className="flex gap-2"><Terminal size={14} className="mt-1 shrink-0 text-neon" />在线运行代码将在 M6 阶段接入隔离沙箱后开放。</div>
             </div>
@@ -159,9 +159,9 @@ export default function KnowledgeDetail() {
             </div>
           </Panel>
           <div className="grid grid-cols-3 gap-2">
-            <div className="panel p-3 text-center"><GitBranch size={14} className="mx-auto mb-1 text-steel-500" /><div className="text-[10px] text-steel-500">关联知识</div><div className="text-[13px] text-[#d7e6dd]">{parseArr(kp.related_kp_ids).length}</div></div>
-            <div className="panel p-3 text-center"><Target size={14} className="mx-auto mb-1 text-steel-500" /><div className="text-[10px] text-steel-500">配套练习</div><div className="text-[13px] text-[#d7e6dd]">题库</div></div>
-            <div className="panel p-3 text-center"><Bookmark size={14} className="mx-auto mb-1 text-steel-500" /><div className="text-[10px] text-steel-500">状态</div><div className="text-[13px] text-[#d7e6dd]">{kp.mastered ? '已掌握' : '学习中'}</div></div>
+            <div className="panel p-3 text-center"><GitBranch size={14} className="mx-auto mb-1 text-steel-500" /><div className="text-[10px] text-steel-500">关联知识</div><div className="text-[13px] text-[#E8EDF4]">{parseArr(kp.related_kp_ids).length}</div></div>
+            <div className="panel p-3 text-center"><Target size={14} className="mx-auto mb-1 text-steel-500" /><div className="text-[10px] text-steel-500">配套练习</div><div className="text-[13px] text-[#E8EDF4]">题库</div></div>
+            <div className="panel p-3 text-center"><Bookmark size={14} className="mx-auto mb-1 text-steel-500" /><div className="text-[10px] text-steel-500">状态</div><div className="text-[13px] text-[#E8EDF4]">{kp.mastered ? '已掌握' : '学习中'}</div></div>
           </div>
         </div>
       </div>

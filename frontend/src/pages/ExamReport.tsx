@@ -45,11 +45,11 @@ export default function ExamReport() {
       {items.map((x) => (
         <div key={x.key}>
           <div className="mb-1 flex justify-between text-[11px]">
-            <span className="text-[#c3d8cc]">{x.name}</span>
-            <span className={x.rate < 0.6 ? 'text-amber-400' : 'text-neon'}>{x.earned}/{x.max} · {Math.round(x.rate * 100)}%</span>
+            <span className="text-[#CBD5E1]">{x.name}</span>
+            <span className={x.rate < 0.6 ? 'text-challenge' : 'text-neon'}>{x.earned}/{x.max} · {Math.round(x.rate * 100)}%</span>
           </div>
           <div className="progress-track">
-            <div className={`h-full rounded-full transition-all duration-500 ${x.rate < 0.6 ? 'bg-amber-400/70' : 'bg-gradient-to-r from-neon-dim to-neon'}`}
+            <div className={`h-full rounded-full transition-all duration-500 ${x.rate < 0.6 ? 'bg-challenge/70' : 'bg-gradient-to-r from-neon-dim to-neon'}`}
               style={{ width: `${Math.min(100, x.rate * 100)}%` }} />
           </div>
         </div>
@@ -62,7 +62,7 @@ export default function ExamReport() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="mb-1 text-[11px] tracking-[0.18em] text-neon-dim">EXAM REPORT / 考试报告</div>
-          <h1 className="text-[22px] text-[#e4f3e9]">{report.paper_name}</h1>
+          <h1 className="text-[22px] text-[#F1F5F9]">{report.paper_name}</h1>
         </div>
         <div className="flex gap-2">
           <button className="btn-ghost" onClick={exportReport}><Download size={14} /> 导出报告</button>
@@ -81,11 +81,11 @@ export default function ExamReport() {
         </div>
         <div className="panel p-4">
           <div className="flex items-center gap-2 text-[11px] text-steel-500"><Clock size={13} /> 答题用时</div>
-          <div className="mt-2 text-[30px] leading-none text-[#d7e6dd]">{Math.floor(report.time_used_seconds / 60)}<span className="ml-1 text-[13px] text-steel-500">分 {report.time_used_seconds % 60} 秒</span></div>
+          <div className="mt-2 text-[30px] leading-none text-[#E8EDF4]">{Math.floor(report.time_used_seconds / 60)}<span className="ml-1 text-[13px] text-steel-500">分 {report.time_used_seconds % 60} 秒</span></div>
         </div>
         <div className="panel p-4">
           <div className="flex items-center gap-2 text-[11px] text-steel-500"><AlertTriangle size={13} /> 待复习错题</div>
-          <div className="mt-2 text-[30px] leading-none text-amber-400">{report.wrong_items.length}</div>
+          <div className="mt-2 text-[30px] leading-none text-challenge">{report.wrong_items.length}</div>
         </div>
       </div>
 
@@ -97,7 +97,7 @@ export default function ExamReport() {
       <Panel title="复习建议" action={<Lightbulb size={14} className="text-neon" />}>
         <div className="space-y-2">
           {report.suggestions.map((s, i) => (
-            <div key={i} className="rounded-lg border border-neon/20 bg-neon/5 px-4 py-2.5 text-[12px] leading-6 text-[#b8d9c4]">
+            <div key={i} className="rounded-lg border border-neon/20 bg-neon/5 px-4 py-2.5 text-[12px] leading-6 text-[#C8D6E5]">
               {i + 1}. {s}
             </div>
           ))}
@@ -114,19 +114,19 @@ export default function ExamReport() {
                   <span className="tag">{w.knowledge_point_name}</span>
                   <span className="tag">本题 {w.score} 分</span>
                 </div>
-                <div className="mb-2 whitespace-pre-wrap text-[13px] leading-6 text-[#d7e6dd]">{w.question_content}</div>
+                <div className="mb-2 whitespace-pre-wrap text-[13px] leading-6 text-[#E8EDF4]">{w.question_content}</div>
                 {w.code_content && <pre className="code-block mb-3">{w.code_content}</pre>}
                 <div className="grid gap-2 sm:grid-cols-2">
                   <div className="rounded border border-red-500/25 bg-red-500/5 p-3 text-[12px] leading-6">
                     <div className="mb-1 text-[11px] text-red-300">你的答案</div>
-                    <span className="text-[#d7e6dd]">{w.user_answer || '未作答'}</span>
+                    <span className="text-[#E8EDF4]">{w.user_answer || '未作答'}</span>
                   </div>
                   <div className="rounded border border-neon/25 bg-neon/5 p-3 text-[12px] leading-6">
                     <div className="mb-1 text-[11px] text-neon">正确答案</div>
                     <span className="text-neon">{w.correct_answer}</span>
                   </div>
                 </div>
-                <div className="mt-2 rounded border border-ink-700/50 p-3 text-[12px] leading-6 text-[#a9c2b5]">
+                <div className="mt-2 rounded border border-ink-700/50 p-3 text-[12px] leading-6 text-[#94A3B8]">
                   <span className="text-steel-500">解析：</span>{w.explanation}
                 </div>
               </div>

@@ -9,7 +9,7 @@ import type { GameChapter, GameLevel } from '../types'
 
 const STATUS_STYLE: Record<string, { cls: string; icon: any; label: string }> = {
   locked: { cls: 'border-ink-700/60 bg-ink-900/50 text-steel-600', icon: Lock, label: '未解锁' },
-  available: { cls: 'border-steel-500/50 bg-ink-800/60 text-[#c3d8cc]', icon: ChevronRight, label: '可学习' },
+  available: { cls: 'border-steel-500/50 bg-ink-800/60 text-[#CBD5E1]', icon: ChevronRight, label: '可学习' },
   in_progress: { cls: 'border-blue-400/50 bg-blue-400/10 text-blue-300', icon: Target, label: '进行中' },
   completed: { cls: 'border-neon/40 bg-neon/10 text-neon', icon: Check, label: '已完成' },
   mastered: { cls: 'border-amber-400/60 bg-amber-400/10 text-amber-300', icon: Star, label: '已精通' },
@@ -47,7 +47,7 @@ export default function GameMap() {
     <div className="space-y-5">
       <div>
         <div className="mb-1 text-[11px] tracking-[0.18em] text-neon-dim">GAME MAP / 游戏化闯关</div>
-        <h1 className="text-[22px] text-[#e4f3e9]">C 语言学习地图</h1>
+        <h1 className="text-[22px] text-[#F1F5F9]">C 语言学习地图</h1>
         <p className="mt-1 text-[12px] text-steel-400">
           完成知识点学习与章节挑战可获得经验值并解锁下一区域。所有奖励均由真实答题结果计算。
         </p>
@@ -65,7 +65,7 @@ export default function GameMap() {
                     : 'border-ink-700 text-steel-600'
                   }`}>{String(ci + 1).padStart(2, '0')}</div>
                   <div>
-                    <div className="flex items-center gap-2 text-[13px] text-[#e4f3e9]">
+                    <div className="flex items-center gap-2 text-[13px] text-[#F1F5F9]">
                       {chapter.name}
                       {chapter.challenge_passed && <span className="tag-neon">挑战已通过</span>}
                       {!chapter.unlocked && <span className="tag"><Lock size={10} className="mr-1" />未解锁</span>}
@@ -126,7 +126,7 @@ export default function GameMap() {
                 <Trophy size={22} />
               </div>
               <div>
-                <div className="text-[15px] text-[#e4f3e9]">Lv.{level.level} · {level.title}</div>
+                <div className="text-[15px] text-[#F1F5F9]">Lv.{level.level} · {level.title}</div>
                 <div className="text-[11px] text-steel-500">{level.exp} EXP · 连续学习 {profile.streak_days} 天</div>
               </div>
             </div>
@@ -151,7 +151,7 @@ export default function GameMap() {
             <div className="grid grid-cols-2 gap-2">
               {profile.achievements.map((a: any) => (
                 <div key={a.code} className={`rounded-lg border p-2.5 ${a.unlocked ? 'border-neon/30 bg-neon/5' : 'border-ink-700/50 bg-ink-900/30 opacity-50'}`}>
-                  <div className="flex items-center gap-1.5 text-[11px] text-[#d7e6dd]">
+                  <div className="flex items-center gap-1.5 text-[11px] text-[#E8EDF4]">
                     {a.unlocked ? <Sparkles size={12} className="text-neon" /> : <Lock size={11} />}{a.name}
                   </div>
                   <div className="mt-1 text-[10px] leading-4 text-steel-500">{a.description}</div>
@@ -166,7 +166,7 @@ export default function GameMap() {
               {profile.daily_tasks.map((t: any) => (
                 <div key={t.code}>
                   <div className="mb-1 flex justify-between text-[11px]">
-                    <span className={t.completed ? 'text-neon' : 'text-[#c3d8cc]'}>
+                    <span className={t.completed ? 'text-neon' : 'text-[#CBD5E1]'}>
                       {t.completed ? <Check size={11} className="mr-1 inline" /> : null}{t.title}
                     </span>
                     <span className="text-steel-500">{t.progress}/{t.target} · +{t.exp_reward}</span>

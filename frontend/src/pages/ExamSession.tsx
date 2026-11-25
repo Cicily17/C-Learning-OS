@@ -122,13 +122,13 @@ export default function ExamSession() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2 text-[13px] text-[#e4f3e9]">
+          <div className="flex items-center gap-2 text-[13px] text-[#F1F5F9]">
             <ShieldCheck size={15} className="text-neon" /> {paperName}
           </div>
           <div className="mt-1 text-[11px] text-steel-500">考试进行中 · 答案已封存 · 交卷后方可查看成绩</div>
         </div>
         <div className={`flex items-center gap-2 rounded-lg border px-4 py-2 font-mono text-[16px] ${
-          remaining !== null && remaining < 300 ? 'border-red-500/50 bg-red-500/5 text-red-300' : 'border-neon/30 text-neon'
+          remaining !== null && remaining < 300 ? 'border-danger/60 bg-danger/10 text-danger shadow-glow-orange' : 'border-learn/40 bg-learn/5 text-learn shadow-glow-blue'
         }`}>
           <Timer size={16} /> {remaining === null ? '--:--' : fmt(remaining)}
         </div>
@@ -149,14 +149,14 @@ export default function ExamSession() {
                     : 'border-ink-700/60 text-steel-500 hover:border-ink-600'
                   }`}>
                   {i + 1}
-                  {isMarked && <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-amber-400" />}
+                  {isMarked && <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-challenge" />}
                 </button>
               )
             })}
           </div>
           <div className="mt-4 space-y-2 border-t border-ink-700/50 pt-3 text-[11px] text-steel-500">
             <div className="flex justify-between"><span>已作答</span><span className="text-neon">{answeredCount} / {questions.length}</span></div>
-            <div className="flex justify-between"><span>标记疑难</span><span className="text-amber-400">{markedCount}</span></div>
+            <div className="flex justify-between"><span>标记疑难</span><span className="text-challenge">{markedCount}</span></div>
           </div>
           <div className="mt-4 flex gap-2">
             <button className="btn-ghost flex-1 text-[11px]" disabled={index === 0} onClick={() => go(index - 1)}><ChevronLeft size={13} /> 上一题</button>
@@ -166,7 +166,7 @@ export default function ExamSession() {
 
         <div className="space-y-4">
           <Panel title={`第 ${index + 1} 题 / ${questions.length}`} action={<span className="tag">{q.question_type}</span>}>
-            <div className="mb-4 whitespace-pre-wrap text-[14px] leading-7 text-[#dfece3]">{q.question_content}</div>
+            <div className="mb-4 whitespace-pre-wrap text-[14px] leading-7 text-[#E8EDF4]">{q.question_content}</div>
             {q.code_content && (
               <Highlight theme={themes.vsDark} code={q.code_content.trim()} language="c">
                 {({ className, style, tokens, getLineProps, getTokenProps }) => (
@@ -187,7 +187,7 @@ export default function ExamSession() {
                 return (
                   <button key={opt.key} onClick={() => choose(opt.key)}
                     className={`flex w-full items-start gap-3 rounded-lg border px-3.5 py-3 text-left text-[13px] transition active:scale-[0.995] ${
-                      active ? 'border-neon/60 bg-neon/10 text-neon' : 'border-ink-700/60 bg-ink-900/40 text-[#c3d8cc] hover:border-ink-600'
+                      active ? 'border-neon/60 bg-neon/10 text-neon' : 'border-ink-700/60 bg-ink-900/40 text-[#CBD5E1] hover:border-ink-600'
                     }`}>
                     <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded border text-[11px] ${
                       active ? 'border-neon bg-neon text-ink-950' : 'border-ink-600 text-steel-400'
@@ -202,7 +202,7 @@ export default function ExamSession() {
               )}
             </div>
             <div className="mt-5 flex items-center justify-between border-t border-ink-700/50 pt-4">
-              <button className={`btn-ghost text-[12px] ${marked[q.id] ? 'border-amber-400/50 text-amber-300' : ''}`} onClick={toggleMark}>
+              <button className={`btn-ghost text-[12px] ${marked[q.id] ? 'border-challenge/50 text-challenge-soft' : ''}`} onClick={toggleMark}>
                 <Flag size={14} /> {marked[q.id] ? '已标记疑难' : '标记疑难'}
               </button>
               <button className="btn-primary text-[12px]" onClick={() => setShowSubmit(true)}>
@@ -214,7 +214,7 @@ export default function ExamSession() {
 
         <div className="space-y-4">
           <Panel title="考试规则">
-            <div className="space-y-2 text-[11px] leading-6 text-[#a9c2b5]">
+            <div className="space-y-2 text-[11px] leading-6 text-[#94A3B8]">
               <p className="flex items-start gap-2"><LockKeyhole size={13} className="mt-1 shrink-0 text-neon" />答案保存在服务端，交卷后统一判分。</p>
               <p>· 作答自动保存，可自由跳题。</p>
               <p>· 过程中不显示正误、分数与解析。</p>
@@ -225,7 +225,7 @@ export default function ExamSession() {
             <div className="space-y-3">
               <div className="flex justify-between text-[12px]"><span className="text-steel-500">已作答</span><span className="text-neon">{answeredCount}/{questions.length}</span></div>
               <ProgressBar value={(answeredCount / questions.length) * 100} />
-              <div className="flex justify-between text-[12px]"><span className="text-steel-500">疑难标记</span><span className="text-amber-400">{markedCount}</span></div>
+              <div className="flex justify-between text-[12px]"><span className="text-steel-500">疑难标记</span><span className="text-challenge">{markedCount}</span></div>
             </div>
           </Panel>
         </div>
@@ -235,8 +235,8 @@ export default function ExamSession() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
           <div className="panel w-full max-w-md p-6">
             <div className="mb-3 flex items-center gap-2 text-neon"><Send size={17} /> 确认交卷</div>
-            <p className="mb-4 text-[12px] leading-6 text-[#a9c2b5]">
-              还有 <span className="text-amber-400">{questions.length - answeredCount}</span> 题未作答。交卷后答案将锁定，无法修改。
+            <p className="mb-4 text-[12px] leading-6 text-[#94A3B8]">
+              还有 <span className="text-challenge">{questions.length - answeredCount}</span> 题未作答。交卷后答案将锁定，无法修改。
             </p>
             <input className="field mb-4" placeholder="请输入「确认交卷」以完成提交" value={confirmText}
               onChange={(e) => setConfirmText(e.target.value)} />
