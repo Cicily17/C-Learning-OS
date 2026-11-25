@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from .. import game_service, models, question_generator, schemas
+from .. import game_service, models, question_banks, question_generator, schemas
 from ..auth import get_current_user
 from ..database import get_db
 
@@ -63,7 +63,17 @@ def create_session(
     if payload.question_types:
         query = query.filter(models.Question.question_type.in_(payload.question_types))
 
-    candidates = query.all()
+    bank = payload.bank.strip() if payload.bank else ""
+    valid_bank = bank if bank in question_banks.BANK_KEYS else ""
+
+    def fetch_candidates():
+        rows = query.all()
+        if valid_bank:
+            # 多标签题库：JSON 数组成员匹配（在 Python 侧过滤，避免不同数据库方言差异）
+            rows = [q for q in rows if question_banks.in_bank(q.banks_json, valid_bank)]
+        return rows
+
+    candidates = fetch_candidates()
     auto_generated = 0
     shortage = payload.count - len(candidates)
     if shortage > 0:
@@ -75,10 +85,14 @@ def create_session(
             db, payload.knowledge_point_ids, qtype, difficulty, shortage
         )
         if generated:
+            if valid_bank:
+                # 自动补充的题目也归入当前题库，确保按题库组卷能取到新题
+                for q in generated:
+                    q["banks_json"] = json.dumps([valid_bank], ensure_ascii=False)
             ids = question_generator.persist_questions(db, generated, user.id, "ai")
             auto_generated = len(ids)
             # 重新查询，把新题纳入候选
-            candidates = query.all()
+            candidates = fetch_candidates()
     if len(candidates) < payload.count:
         raise HTTPException(
             status_code=409,

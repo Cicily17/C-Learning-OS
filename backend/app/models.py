@@ -89,6 +89,7 @@ class Question(Base):
     explanation = Column(Text, default="")
     score = Column(Integer, default=1)
     tags_json = Column(Text, default="[]")
+    banks_json = Column(Text, default="[]")
     source_type = Column(String(16), default="preset")
     created_by = Column(String(36), nullable=True)
     version = Column(Integer, default=1)

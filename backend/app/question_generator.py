@@ -8,7 +8,7 @@ import json
 import random
 
 from .ai.engine import _call_llm, ai_status
-from . import models
+from . import models, question_banks
 
 DIFFICULTIES = ["入门", "简单", "中等", "困难"]
 TYPES = ["单项选择题", "多项选择题", "判断题", "填空题", "程序阅读题",
@@ -219,6 +219,18 @@ def persist_questions(db, questions: list[dict], user_id: str, source_type: str)
     for q in questions:
         max_no += 1
         qid = f"{prefix}{max_no:04d}"
+        banks = question_banks.classify_banks(
+            q["question_type"], q["difficulty"], q.get("tags_json", "[]")
+        )
+        # 调用方若指定了额外题库归属，合并进去（例如自动补题要求归入当前题库）
+        extra = q.get("banks_json")
+        if extra:
+            try:
+                for b in json.loads(extra):
+                    if b not in banks:
+                        banks.append(b)
+            except (ValueError, TypeError):
+                pass
         question = models.Question(
             question_id=qid, chapter_id=q["chapter_id"], knowledge_point_id=q["knowledge_point_id"],
             question_type=q["question_type"], difficulty=q["difficulty"],
@@ -226,6 +238,7 @@ def persist_questions(db, questions: list[dict], user_id: str, source_type: str)
             options_json=json.dumps(q.get("options", []), ensure_ascii=False),
             correct_answer=q["correct_answer"], explanation=q["explanation"],
             score=q.get("score", 1), tags_json=q.get("tags_json", "[]"),
+            banks_json=json.dumps(banks, ensure_ascii=False),
             source_type=source_type, created_by=user_id, status="active",
         )
         db.add(question)

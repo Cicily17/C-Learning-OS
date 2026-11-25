@@ -1,10 +1,12 @@
 """题库接口：可用量预览、AI 出题、自编题、题目管理。"""
+import json
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from .. import models, question_generator
+from .. import models, question_banks, question_generator
 from ..auth import get_current_user
 from ..database import get_db
 
@@ -16,6 +18,7 @@ class AvailabilityIn(BaseModel):
     chapter_ids: list[str] = Field(default_factory=list)
     difficulties: list[str] = Field(default_factory=list)
     question_types: list[str] = Field(default_factory=list)
+    bank: str = ""
 
 
 class AiGenerateIn(AvailabilityIn):
@@ -29,6 +32,7 @@ class CustomQuestionIn(BaseModel):
     knowledge_point_id: str
     question_type: str
     difficulty: str
+    bank: str = ""
     question_content: str = Field(min_length=6)
     code_content: str = ""
     options: list[dict] = Field(default_factory=list)
@@ -49,22 +53,33 @@ def _filtered_query(db, payload, user_id=None):
         q = q.filter(models.Question.question_type.in_(payload.question_types))
     if user_id is not None:
         q = q.filter(models.Question.created_by == user_id)
-    return q
+    bank = payload.bank.strip() if getattr(payload, "bank", "") else ""
+    rows = q.all()
+    if bank and bank in question_banks.BANK_KEYS:
+        rows = [row for row in rows if question_banks.in_bank(row.banks_json, bank)]
+    return rows
 
 
 @router.post("/availability", response_model=dict)
 def availability(payload: AvailabilityIn, db: Session = Depends(get_db),
                  user: models.User = Depends(get_current_user)):
     """实时预览当前筛选条件的可用题量，供前端在组卷前提示。"""
-    total = _filtered_query(db, payload).count()
+    total = len(_filtered_query(db, payload))
     by_type = {}
     for r in db.query(models.Question.question_type, func.count(models.Question.id)) \
             .filter(models.Question.status == "active") \
             .group_by(models.Question.question_type).all():
         by_type[r[0]] = r[1]
+    # 各题库题量（不受当前 bank 选择影响，供题库切换时展示）
+    by_bank = {}
+    for b in question_banks.BANK_KEYS:
+        by_bank[b] = sum(1 for q in db.query(models.Question)
+                         .filter(models.Question.status == "active").all()
+                         if question_banks.in_bank(q.banks_json, b))
     return {"available": total, "bank_total": db.query(models.Question)
             .filter(models.Question.status == "active").count(),
-            "by_type_all": by_type,
+            "by_type_all": by_type, "by_bank": by_bank,
+            "banks": question_banks.BANKS,
             "ai_enabled": True}
 
 
@@ -81,6 +96,11 @@ def ai_generate(payload: AiGenerateIn, db: Session = Depends(get_db),
     )
     if not questions:
         raise HTTPException(status_code=422, detail=f"生成失败，未产生有效题目：{report}")
+    bank = payload.bank.strip() if payload.bank else ""
+    if bank and bank in question_banks.BANK_KEYS:
+        for q in questions:
+            q["banks_json"] = json.dumps([bank], ensure_ascii=False)
+        report["bank"] = bank
     ids = question_generator.persist_questions(db, questions, user.id, "ai")
     return {"generated": len(ids), "question_ids": ids, "report": report,
             "questions": [{
@@ -108,6 +128,9 @@ def create_custom(payload: CustomQuestionIn, db: Session = Depends(get_db),
     q.update({"chapter_id": payload.chapter_id or kp.chapter_id,
               "knowledge_point_id": kp.id,
               "tags_json": '["自编题", "%s"]' % kp.name})
+    bank = payload.bank.strip() if payload.bank else ""
+    if bank and bank in question_banks.BANK_KEYS:
+        q["banks_json"] = json.dumps([bank], ensure_ascii=False)
     qid = question_generator.persist_questions(db, [q], user.id, "custom")[0]
     row = db.query(models.Question).filter(models.Question.question_id == qid).first()
     return {"message": "题目已创建并加入题库", "question_id": qid, "id": row.id}

@@ -68,8 +68,15 @@ export interface PracticeConfig {
   chapter_ids: string[]
   difficulties: string[]
   question_types: string[]
+  bank?: string
   count: number
   time_limit_minutes?: number | null
+}
+
+export interface QuestionBank {
+  key: string
+  name: string
+  desc: string
 }
 
 export interface ExamConfig {

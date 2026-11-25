@@ -123,6 +123,7 @@ class PracticeConfigIn(BaseModel):
     chapter_ids: list[str] = Field(default_factory=list)
     difficulties: list[str] = Field(default_factory=list)
     question_types: list[str] = Field(default_factory=list)
+    bank: str = ""  # 题库筛选：leetcode/专升本/本科/考研，空为不限
     count: int = Field(default=10, ge=1, le=200)
     time_limit_minutes: Optional[int] = None
 

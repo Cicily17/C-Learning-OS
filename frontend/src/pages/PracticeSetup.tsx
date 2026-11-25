@@ -3,8 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { ChevronDown, ChevronRight, Dumbbell, RotateCcw, CheckSquare, Sparkles, Plus, RefreshCw } from 'lucide-react'
 import { learningApi, practiceApi, questionsApi } from '../api/client'
 import { Panel, useToast } from '../components/Layout'
-import type { Chapter, KnowledgePoint, PracticeConfig } from '../types'
+import type { Chapter, KnowledgePoint, PracticeConfig, QuestionBank } from '../types'
 
+const BANKS_FALLBACK: QuestionBank[] = [
+  { key: 'leetcode', name: 'LeetCode 题库', desc: '编程与算法实战题' },
+  { key: '专升本', name: '专升本题库', desc: '基础概念与语法' },
+  { key: '本科', name: '本科题库', desc: '课程同步练习' },
+  { key: '考研', name: '考研题库', desc: '综合与拔高题' },
+]
 const DIFFICULTIES = ['入门', '简单', '中等', '困难']
 const TYPES = ['单项选择题', '多项选择题', '判断题', '填空题', '程序阅读题', '程序结果分析题', '找错题', '代码补全题', '编程题']
 const COUNTS = [5, 10, 20, 30, 50]
@@ -15,6 +21,9 @@ export default function PracticeSetup() {
   const toast = useToast()
   const [chapters, setChapters] = useState<Chapter[]>([])
   const [kps, setKps] = useState<KnowledgePoint[]>([])
+  const [banks, setBanks] = useState<QuestionBank[]>(BANKS_FALLBACK)
+  const [byBank, setByBank] = useState<Record<string, number>>({})
+  const [selectedBank, setSelectedBank] = useState('')
   const [selectedKps, setSelectedKps] = useState<string[]>([])
   const [difficulties, setDifficulties] = useState<string[]>([])
   const [types, setTypes] = useState<string[]>([])
@@ -63,21 +72,29 @@ export default function PracticeSetup() {
   const finalTime = customTime ? Number(customTime) : time
 
   // 实时预览当前筛选条件下的可用题量
-  const filterKey = JSON.stringify({ selectedKps, difficulties, types })
+  const filterKey = JSON.stringify({ selectedKps, difficulties, types, selectedBank })
   useEffect(() => {
     const config = {
       knowledge_point_ids: selectedKps,
       difficulties,
       question_types: types,
+      bank: selectedBank,
     }
     questionsApi.availability(config as Record<string, unknown>)
-      .then((r) => setAvailable(r.data.available))
+      .then((r) => {
+        setAvailable(r.data.available)
+        if (r.data.banks?.length) setBanks(r.data.banks)
+        if (r.data.by_bank) setByBank(r.data.by_bank)
+      })
       .catch(() => setAvailable(null))
   }, [filterKey])
 
   const refreshAvailable = () => questionsApi.availability({
-    knowledge_point_ids: selectedKps, difficulties, question_types: types,
-  } as Record<string, unknown>).then((r) => setAvailable(r.data.available)).catch(() => {})
+    knowledge_point_ids: selectedKps, difficulties, question_types: types, bank: selectedBank,
+  } as Record<string, unknown>).then((r) => {
+    setAvailable(r.data.available)
+    if (r.data.by_bank) setByBank(r.data.by_bank)
+  }).catch(() => {})
 
   const aiGenerate = async () => {
     if (!selectedKps.length) { toast('请先选择知识点，AI 才能按知识点出题', 'error'); return }
@@ -85,6 +102,7 @@ export default function PracticeSetup() {
     try {
       const r = await questionsApi.aiGenerate({
         knowledge_point_ids: selectedKps, qtype: genQtype, difficulty: genDiff, count: genCount,
+        bank: selectedBank,
       })
       toast(`AI 已生成并校验通过 ${r.data.generated} 道「${genDiff}·${genQtype}」题目，已加入题库`, 'success')
       await refreshAvailable()
@@ -100,7 +118,7 @@ export default function PracticeSetup() {
     const needsOptions = !['填空题', '编程题'].includes(cf.question_type)
     const payload: Record<string, unknown> = {
       chapter_id: cf.chapter_id, knowledge_point_id: cf.knowledge_point_id,
-      question_type: cf.question_type, difficulty: cf.difficulty,
+      question_type: cf.question_type, difficulty: cf.difficulty, bank: selectedBank,
       question_content: cf.question_content, code_content: cf.code_content,
       correct_answer: cf.correct_answer, explanation: cf.explanation, score: 1,
     }
@@ -130,6 +148,7 @@ export default function PracticeSetup() {
       chapter_ids: [],
       difficulties,
       question_types: types,
+      bank: selectedBank,
       count: finalCount,
       time_limit_minutes: finalTime,
     }
@@ -149,8 +168,35 @@ export default function PracticeSetup() {
       <div>
         <div className="mb-1 text-[11px] tracking-[0.18em] text-neon-dim">PRACTICE CENTER / 智能练习中心</div>
         <h1 className="text-[22px] text-[#e4f3e9]">配置你的练习</h1>
-        <p className="mt-1 text-[12px] text-steel-400">系统按你选择的条件从题库真实组卷；题目不足时会明确提示。</p>
+        <p className="mt-1 text-[12px] text-steel-400">先选择题库，再选知识点与条件，系统从该题库真实组卷；题目不足时自动补足。</p>
       </div>
+
+      <Panel title="选择题库" action={
+        <button className="text-[11px] text-steel-400 hover:text-neon" onClick={() => setSelectedBank('')}>
+          {selectedBank ? '清除选择（不限题库）' : '当前：全部题库'}
+        </button>
+      }>
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          <button onClick={() => setSelectedBank('')}
+            className={`rounded-lg border px-3 py-3 text-left transition ${selectedBank === '' ? 'border-neon/60 bg-neon/10' : 'border-ink-700/60 bg-ink-900/50 hover:border-ink-600'}`}>
+            <div className={`text-[13px] ${selectedBank === '' ? 'text-neon' : 'text-[#d7e6dd]'}`}>全部题库</div>
+            <div className="mt-1 text-[10px] text-steel-500">跨所有题库组卷</div>
+          </button>
+          {banks.map((b) => {
+            const on = selectedBank === b.key
+            return (
+              <button key={b.key} onClick={() => setSelectedBank(b.key)}
+                className={`rounded-lg border px-3 py-3 text-left transition ${on ? 'border-neon/60 bg-neon/10' : 'border-ink-700/60 bg-ink-900/50 hover:border-ink-600'}`}>
+                <div className={`flex items-center justify-between text-[13px] ${on ? 'text-neon' : 'text-[#d7e6dd]'}`}>
+                  <span>{b.name}</span>
+                  <span className={`font-mono text-[11px] ${on ? 'text-neon' : 'text-steel-500'}`}>{byBank[b.key] ?? '·'}</span>
+                </div>
+                <div className="mt-1 text-[10px] text-steel-500">{b.desc}</div>
+              </button>
+            )
+          })}
+        </div>
+      </Panel>
 
       <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
         <Panel
@@ -275,9 +321,9 @@ export default function PracticeSetup() {
 
           <div className="panel p-4">
             <div className="mb-2 flex items-center justify-between text-[11px] text-steel-500">
-              <span>已选 {selectedKps.length} 个知识点 · {finalCount} 题 · {finalTime ? `${finalTime} 分钟` : '不限时'}</span>
+              <span>{banks.find((b) => b.key === selectedBank)?.name || '全部题库'} · {selectedKps.length} 个知识点 · {finalCount} 题 · {finalTime ? `${finalTime} 分钟` : '不限时'}</span>
               <button className="flex items-center gap-1 hover:text-neon" onClick={() => {
-                setSelectedKps([]); setDifficulties([]); setTypes([]); setCount(10); setTime(null); setCustomCount(''); setCustomTime('')
+                setSelectedKps([]); setDifficulties([]); setTypes([]); setSelectedBank(''); setCount(10); setTime(null); setCustomCount(''); setCustomTime('')
               }}><RotateCcw size={12} /> 重置</button>
             </div>
             <div className="mb-3 flex items-center justify-between rounded-lg border border-ink-700/60 bg-ink-900/50 px-3 py-2 text-[11px]">
@@ -303,7 +349,7 @@ export default function PracticeSetup() {
             </button>
           }>
             <p className="mb-3 text-[11px] leading-5 text-steel-500">
-              勾选条件后若题目不足，可让 AI 按知识点即时出题（经校验后入题库），或自己编写题目。
+              勾选条件后若题目不足，可让 AI 按知识点即时出题，或自己编写题目。新题将归入当前选择题库（{banks.find((b) => b.key === selectedBank)?.name || '全部题库'}）。
             </p>
             <div className="space-y-2">
               <div className="grid grid-cols-2 gap-2">
