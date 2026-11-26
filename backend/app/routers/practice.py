@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from .. import game_service, models, question_banks, question_generator, schemas
+from .. import game_service, history_service, models, question_banks, question_generator, schemas
 from ..auth import get_current_user
 from ..database import get_db
 
@@ -471,14 +471,29 @@ def history(db: Session = Depends(get_db), user: models.User = Depends(get_curre
 @router.delete("/history/{session_id}", response_model=dict)
 def delete_history(session_id: str, db: Session = Depends(get_db),
                    user: models.User = Depends(get_current_user)):
-    """删除一条练习历史，级联清理答题明细与对应学习记录。"""
+    """删除一条练习历史，并回退这次作答对错题本的影响。
+
+    - 删除答题明细与对应的学习记录；
+    - 错题本按本次错题逐题回退计数，归零后移除；
+    - 已获得的 EXP 与章节通关记录属于“已发生的学习行为”，不在此处回收。
+    """
     session = db.query(models.PracticeSession).filter(
         models.PracticeSession.id == session_id,
         models.PracticeSession.user_id == user.id,
     ).first()
     if not session:
         raise HTTPException(status_code=404, detail="练习记录不存在")
-    db.query(models.PracticeAnswer).filter(models.PracticeAnswer.session_id == session_id).delete(synchronize_session=False)
+
+    answers = (
+        db.query(models.PracticeAnswer)
+        .filter(models.PracticeAnswer.session_id == session_id)
+        .all()
+    )
+    history_service.rollback_wrong_questions(db, user.id, answers)
+
+    db.query(models.PracticeAnswer).filter(
+        models.PracticeAnswer.session_id == session_id
+    ).delete(synchronize_session=False)
     db.query(models.LearningRecord).filter(
         models.LearningRecord.user_id == user.id,
         models.LearningRecord.record_type == "practice",
@@ -486,18 +501,27 @@ def delete_history(session_id: str, db: Session = Depends(get_db),
     ).delete(synchronize_session=False)
     db.delete(session)
     db.commit()
-    return {"message": "练习记录已删除"}
+    return {"message": "练习记录已删除，正确率与错题统计已同步更新"}
 
 
 @router.delete("/history", response_model=dict)
 def clear_history(db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
-    """清空当前用户的全部练习历史。"""
+    """清空当前用户已提交的练习历史（进行中的练习不会被动到）。"""
     sessions = db.query(models.PracticeSession).filter(
-        models.PracticeSession.user_id == user.id
+        models.PracticeSession.user_id == user.id,
+        models.PracticeSession.status == "submitted",
     ).all()
     ids = [s.id for s in sessions]
     if ids:
-        db.query(models.PracticeAnswer).filter(models.PracticeAnswer.session_id.in_(ids)).delete(synchronize_session=False)
+        answers = (
+            db.query(models.PracticeAnswer)
+            .filter(models.PracticeAnswer.session_id.in_(ids))
+            .all()
+        )
+        history_service.rollback_wrong_questions(db, user.id, answers)
+        db.query(models.PracticeAnswer).filter(
+            models.PracticeAnswer.session_id.in_(ids)
+        ).delete(synchronize_session=False)
         db.query(models.LearningRecord).filter(
             models.LearningRecord.user_id == user.id,
             models.LearningRecord.record_type == "practice",
@@ -506,7 +530,7 @@ def clear_history(db: Session = Depends(get_db), user: models.User = Depends(get
     for s in sessions:
         db.delete(s)
     db.commit()
-    return {"message": f"已清空 {len(ids)} 条练习记录"}
+    return {"message": f"已清空 {len(ids)} 条练习记录，正确率与错题统计已同步更新"}
 
 
 @router.get("/wrong-questions", response_model=list[dict])

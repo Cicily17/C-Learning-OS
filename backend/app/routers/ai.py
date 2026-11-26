@@ -64,3 +64,13 @@ def run_code(
     user: models.User = Depends(get_current_user),
 ):
     return engine.run_c(payload.code, payload.stdin)
+
+
+@router.post("/code-hint", response_model=dict)
+def code_hint(
+    payload: schemas.CodeHintIn,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    """代码题三级思路提示。练习与考试均可使用，只给思路不给答案。"""
+    return engine.code_hint(db, payload)

@@ -55,7 +55,11 @@ def list_kps(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    query = db.query(models.KnowledgePoint).filter(models.KnowledgePoint.is_active.is_(True))
+    query = (
+        db.query(models.KnowledgePoint)
+        .join(models.Chapter, models.Chapter.id == models.KnowledgePoint.chapter_id)
+        .filter(models.KnowledgePoint.is_active.is_(True))
+    )
     if chapter_id:
         query = query.filter(models.KnowledgePoint.chapter_id == chapter_id)
     if keyword:
@@ -65,7 +69,7 @@ def list_kps(
             | (models.KnowledgePoint.summary.like(like))
             | (models.KnowledgePoint.code.like(like))
         )
-    kps = query.order_by(models.KnowledgePoint.chapter_id, models.KnowledgePoint.order_index).all()
+    kps = query.order_by(models.Chapter.order_index, models.KnowledgePoint.order_index).all()
     return [_kp_out(db, kp, user) for kp in kps]
 
 

@@ -125,6 +125,7 @@ export interface ExamReport {
   submitted_at: string
   knowledge_point_scores: ScoreBucket[]
   question_type_scores: ScoreBucket[]
+  items?: any[]
   wrong_items: any[]
   weak_knowledge_point_ids: string[]
   suggestions: string[]

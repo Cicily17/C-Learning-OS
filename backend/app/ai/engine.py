@@ -158,6 +158,54 @@ def answer(db, payload) -> dict:
         }
 
 
+def code_hint(db, payload) -> dict:
+    """代码题三级思路提示：只讲方向与关键步骤，绝不输出完整答案代码。"""
+    level = int(payload.level)
+    qtype = payload.question_type or "编程题"
+    difficulty = payload.difficulty or "中等"
+    question = (payload.question or "").strip()
+    code = (payload.code or "").strip()
+    level_name = {1: "方向", 2: "关键步骤", 3: "易错与调试"}[level]
+
+    prompt = (
+        f"你是 C 语言编程题的提示助手。题目类型：{qtype}，难度：{difficulty}。\n"
+        f"题干：\n{question[:2500]}\n\n"
+        f"学生当前代码（可为空）：\n{code[:2500]}\n\n"
+        f"请给出第 {level} 级提示（{level_name}）。要求：\n"
+        "1. 用中文，不超过 160 字；\n"
+        "2. 只讲思路、算法步骤、需要使用的语法或调试方向；\n"
+        "3. 严禁给出完整代码、可粘贴的答案片段或直接写出最终输出；\n"
+        "4. 不要评价分数，不要给出正确答案文本。"
+    )
+    try:
+        return {"level": level, "title": level_name, "content": _call_llm(db, prompt), "source": "llm"}
+    except Exception:
+        pass
+
+    # 规则回退：按层级给可执行的思路，不涉及具体答案
+    base = {
+        1: f"这是一道{qtype}（{difficulty}）。先读清输入与输出：确定需要读入哪些变量、最终要输出什么，再决定用顺序、分支还是循环结构。",
+        2: "把任务拆成三步：读入数据 → 核心计算（可用 if/for/while 与数组） → 输出结果。先写出变量定义与 scanf/printf，再补中间逻辑。",
+        3: "调试优先排查：变量是否初始化、数组是否越界、循环终止条件、scanf 是否加取地址符 &、printf 格式符是否匹配、main 是否返回 int。",
+    }[level]
+    hints = [base]
+    if code:
+        static = []
+        for pattern, hint in COMPILE_ERROR_HINTS:
+            if pattern.lower().split("'")[0].strip() in code.lower():
+                static.append(hint)
+        if re.search(r"\bwhile\s*\(\s*1\s*\)", code, re.I):
+            static.append("代码中出现无限循环，请确认有 break 或明确的退出条件。")
+        if static:
+            hints.append("静态检查：" + "；".join(dict.fromkeys(static))[:3])
+    return {
+        "level": level,
+        "title": level_name,
+        "content": "\n".join(hints),
+        "source": "local",
+    }
+
+
 def validate_c_code(code: str) -> str | None:
     if len(code) > 8000:
         return "代码长度不能超过 8000 字符"
@@ -204,7 +252,10 @@ def run_c(code: str, stdin: str = "") -> dict:
         "stage": "runtime",
         "stdout": result.get("stdout", ""),
         "exit_code": result.get("exit_code", -1),
-        "compile_check": compile_check or "通过 gcc -std=c11 语法检查",
+        "compile_check": compile_check or (
+            "通过 gcc -std=c11 语法检查" if compiler
+            else "当前环境未安装 gcc，已跳过硬编译检查，由受限解释器直接执行"
+        ),
         "engine": "restricted-interpreter",
         "limitation": "支持变量、数组、指针、函数、分支与循环及 printf/strlen/sizeof；不支持结构体、文件 IO、多线程等完整 C11 特性",
     }

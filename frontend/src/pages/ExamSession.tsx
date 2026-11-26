@@ -2,9 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Highlight, themes } from 'prism-react-renderer'
 import { Timer, Flag, Send, ChevronLeft, ChevronRight, ShieldCheck, LockKeyhole } from 'lucide-react'
-import { examsApi } from '../api/client'
+import { aiApi, examsApi } from '../api/client'
 import { Panel, ProgressBar, useToast } from '../components/Layout'
+import CodeAnswerWorkspace from '../components/CodeAnswerWorkspace'
 import type { ExamQuestion } from '../types'
+
+const isCodeQuestion = (q: ExamQuestion) => q.question_type === '编程题' || q.question_type === '代码补全题'
 
 export default function ExamSession() {
   const { id } = useParams()
@@ -20,6 +23,7 @@ export default function ExamSession() {
   const [showSubmit, setShowSubmit] = useState(false)
   const [confirmText, setConfirmText] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [hint, setHint] = useState<{ level: number; title?: string; content: string } | null>(null)
   const savingRef = useRef(false)
 
   useEffect(() => {
@@ -104,7 +108,18 @@ export default function ExamSession() {
 
   const go = async (next: number) => {
     if (q) await save(q.id)
+    setHint(null)
     setIndex(Math.max(0, Math.min(questions.length - 1, next)))
+  }
+
+  const askCodeHint = async (level: number) => {
+    if (!q) return { level, title: '思路提示', content: '' }
+    const r = await aiApi.codeHint({
+      question: q.question_content, code: answers[q.id] || '', level,
+      question_type: q.question_type, difficulty: '中等',
+    })
+    setHint(r.data)
+    return r.data
   }
 
   const toggleMark = async () => {
@@ -115,19 +130,19 @@ export default function ExamSession() {
     catch (e) { toast((e as Error).message, 'error') }
   }
 
-  if (!questions.length || !q) return <div className="panel p-8 text-[13px] text-steel-400">正在加载试卷...</div>
+  if (!questions.length || !q) return <div className="panel p-8 text-xs text-steel-400">正在加载试卷...</div>
   const fmt = (s: number) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2 text-[13px] text-[#F1F5F9]">
+          <div className="flex items-center gap-2 text-xs text-text-primary">
             <ShieldCheck size={15} className="text-neon" /> {paperName}
           </div>
-          <div className="mt-1 text-[11px] text-steel-500">考试进行中 · 答案已封存 · 交卷后方可查看成绩</div>
+          <div className="mt-1 text-xs text-steel-500">考试进行中 · 答案已封存 · 交卷后方可查看成绩</div>
         </div>
-        <div className={`flex items-center gap-2 rounded-lg border px-4 py-2 font-mono text-[16px] ${
+        <div className={`flex items-center gap-2 rounded-lg border px-4 py-2 font-mono text-sm ${
           remaining !== null && remaining < 300 ? 'border-danger/60 bg-danger/10 text-danger shadow-glow-orange' : 'border-learn/40 bg-learn/5 text-learn shadow-glow-blue'
         }`}>
           <Timer size={16} /> {remaining === null ? '--:--' : fmt(remaining)}
@@ -135,6 +150,59 @@ export default function ExamSession() {
       </div>
       <ProgressBar value={(answeredCount / questions.length) * 100} />
 
+      {isCodeQuestion(q) ? (
+        <div className="space-y-4">
+          <Panel title="答题卡">
+            <div className="flex flex-wrap gap-1.5">
+              {questions.map((item, i) => (
+                <button key={item.id} onClick={() => go(i)}
+                  className={`relative flex h-8 min-w-8 items-center justify-center rounded border px-2 text-xs transition ${
+                    i === index ? 'border-neon bg-neon/15 text-neon'
+                    : (answers[item.id] || '').trim() ? 'border-neon/30 bg-neon/5 text-neon-dim'
+                    : 'border-ink-700/60 text-steel-500 hover:border-ink-600'
+                  }`}>
+                  {i + 1}
+                  {marked[item.id] && <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-challenge" />}
+                </button>
+              ))}
+            </div>
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-ink-700/50 pt-3">
+              <button className="btn-ghost text-xs" disabled={index === 0} onClick={() => go(index - 1)}><ChevronLeft size={13} /> 上一题</button>
+              <span className="text-xs text-steel-500">已作答 {answeredCount}/{questions.length} · 标记 {markedCount}</span>
+              <button className="btn-ghost text-xs" disabled={index === questions.length - 1} onClick={() => go(index + 1)}>下一题 <ChevronRight size={13} /></button>
+            </div>
+          </Panel>
+
+          <CodeAnswerWorkspace
+            question={{ ...q, difficulty: '中等', tags_json: '[]' }}
+            code={answers[q.id] || q.code_content || ''}
+            onCodeChange={(v) => setAnswers((p) => ({ ...p, [q.id]: v }))}
+            mode="exam"
+            onHint={askCodeHint}
+            hint={hint}
+            meta={[
+              { label: '作答状态', value: (answers[q.id] || '').trim() ? '已作答（自动保存）' : '未作答' },
+              { label: '疑难标记', value: marked[q.id] ? '已标记' : '否' },
+            ]}
+            actions={
+              <>
+                <button className={`btn-ghost text-xs ${marked[q.id] ? 'border-challenge/50 text-challenge-soft' : ''}`} onClick={toggleMark}>
+                  <Flag size={14} /> {marked[q.id] ? '已标记疑难' : '标记疑难'}
+                </button>
+                <button className="btn-primary text-xs" onClick={() => setShowSubmit(true)}><Send size={14} /> 交卷</button>
+              </>
+            }
+          />
+
+          <Panel title="考试规则">
+            <div className="space-y-2 text-xs leading-6 text-steel-400">
+              <p className="flex items-start gap-2"><LockKeyhole size={13} className="mt-1 shrink-0 text-neon" />答案保存在服务端，交卷后统一判分。</p>
+              <p>· 作答自动保存，可自由跳题；过程中不显示正误、分数与解析。</p>
+              <p>· AI 提示仅提供思路与调试方向，不含答案代码；时间耗尽将自动交卷。</p>
+            </div>
+          </Panel>
+        </div>
+      ) : (
       <div className="grid gap-4 xl:grid-cols-[240px_1fr_230px]">
         <Panel title="答题卡" className="h-fit">
           <div className="magnet-grid grid grid-cols-5 gap-1.5">
@@ -143,7 +211,7 @@ export default function ExamSession() {
               const done = !!(answers[item.id] || '').trim()
               return (
                 <button key={item.id} onClick={() => go(i)}
-                  className={`relative flex h-9 items-center justify-center rounded border text-[11px] transition ${
+                  className={`relative flex h-9 items-center justify-center rounded border text-xs transition ${
                     i === index ? 'border-neon bg-neon/15 text-neon'
                     : done ? 'border-neon/30 bg-neon/5 text-neon-dim'
                     : 'border-ink-700/60 text-steel-500 hover:border-ink-600'
@@ -154,19 +222,19 @@ export default function ExamSession() {
               )
             })}
           </div>
-          <div className="mt-4 space-y-2 border-t border-ink-700/50 pt-3 text-[11px] text-steel-500">
+          <div className="mt-4 space-y-2 border-t border-ink-700/50 pt-3 text-xs text-steel-500">
             <div className="flex justify-between"><span>已作答</span><span className="text-neon">{answeredCount} / {questions.length}</span></div>
             <div className="flex justify-between"><span>标记疑难</span><span className="text-challenge">{markedCount}</span></div>
           </div>
           <div className="mt-4 flex gap-2">
-            <button className="btn-ghost flex-1 text-[11px]" disabled={index === 0} onClick={() => go(index - 1)}><ChevronLeft size={13} /> 上一题</button>
-            <button className="btn-ghost flex-1 text-[11px]" disabled={index === questions.length - 1} onClick={() => go(index + 1)}>下一题 <ChevronRight size={13} /></button>
+            <button className="btn-ghost flex-1 text-xs" disabled={index === 0} onClick={() => go(index - 1)}><ChevronLeft size={13} /> 上一题</button>
+            <button className="btn-ghost flex-1 text-xs" disabled={index === questions.length - 1} onClick={() => go(index + 1)}>下一题 <ChevronRight size={13} /></button>
           </div>
         </Panel>
 
         <div className="space-y-4">
           <Panel title={`第 ${index + 1} 题 / ${questions.length}`} action={<span className="tag">{q.question_type}</span>}>
-            <div className="mb-4 whitespace-pre-wrap text-[14px] leading-7 text-[#E8EDF4]">{q.question_content}</div>
+            <div className="mb-4 whitespace-pre-wrap text-sm leading-7 text-text-primary">{q.question_content}</div>
             {q.code_content && (
               <Highlight theme={themes.vsDark} code={q.code_content.trim()} language="c">
                 {({ className, style, tokens, getLineProps, getTokenProps }) => (
@@ -186,10 +254,10 @@ export default function ExamSession() {
                 const active = (answers[q.id] || '').split(',').includes(opt.key)
                 return (
                   <button key={opt.key} onClick={() => choose(opt.key)}
-                    className={`flex w-full items-start gap-3 rounded-lg border px-3.5 py-3 text-left text-[13px] transition active:scale-[0.995] ${
-                      active ? 'border-neon/60 bg-neon/10 text-neon' : 'border-ink-700/60 bg-ink-900/40 text-[#CBD5E1] hover:border-ink-600'
+                    className={`flex w-full items-start gap-3 rounded-lg border px-3.5 py-3 text-left text-xs transition active:scale-[0.995] ${
+                      active ? 'border-neon/60 bg-neon/10 text-neon' : 'border-ink-700/60 bg-ink-900/40 text-steel-300 hover:border-ink-600'
                     }`}>
-                    <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded border text-[11px] ${
+                    <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded border text-xs ${
                       active ? 'border-neon bg-neon text-ink-950' : 'border-ink-600 text-steel-400'
                     }`}>{opt.key}</span>
                     <span className="leading-6">{opt.text}</span>
@@ -202,10 +270,10 @@ export default function ExamSession() {
               )}
             </div>
             <div className="mt-5 flex items-center justify-between border-t border-ink-700/50 pt-4">
-              <button className={`btn-ghost text-[12px] ${marked[q.id] ? 'border-challenge/50 text-challenge-soft' : ''}`} onClick={toggleMark}>
+              <button className={`btn-ghost text-xs ${marked[q.id] ? 'border-challenge/50 text-challenge-soft' : ''}`} onClick={toggleMark}>
                 <Flag size={14} /> {marked[q.id] ? '已标记疑难' : '标记疑难'}
               </button>
-              <button className="btn-primary text-[12px]" onClick={() => setShowSubmit(true)}>
+              <button className="btn-primary text-xs" onClick={() => setShowSubmit(true)}>
                 <Send size={14} /> 交卷
               </button>
             </div>
@@ -214,7 +282,7 @@ export default function ExamSession() {
 
         <div className="space-y-4">
           <Panel title="考试规则">
-            <div className="space-y-2 text-[11px] leading-6 text-[#94A3B8]">
+            <div className="space-y-2 text-xs leading-6 text-steel-400">
               <p className="flex items-start gap-2"><LockKeyhole size={13} className="mt-1 shrink-0 text-neon" />答案保存在服务端，交卷后统一判分。</p>
               <p>· 作答自动保存，可自由跳题。</p>
               <p>· 过程中不显示正误、分数与解析。</p>
@@ -223,19 +291,20 @@ export default function ExamSession() {
           </Panel>
           <Panel title="进度概览">
             <div className="space-y-3">
-              <div className="flex justify-between text-[12px]"><span className="text-steel-500">已作答</span><span className="text-neon">{answeredCount}/{questions.length}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-steel-500">已作答</span><span className="text-neon">{answeredCount}/{questions.length}</span></div>
               <ProgressBar value={(answeredCount / questions.length) * 100} />
-              <div className="flex justify-between text-[12px]"><span className="text-steel-500">疑难标记</span><span className="text-challenge">{markedCount}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-steel-500">疑难标记</span><span className="text-challenge">{markedCount}</span></div>
             </div>
           </Panel>
         </div>
       </div>
+      )}
 
       {showSubmit && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
           <div className="panel w-full max-w-md p-6">
             <div className="mb-3 flex items-center gap-2 text-neon"><Send size={17} /> 确认交卷</div>
-            <p className="mb-4 text-[12px] leading-6 text-[#94A3B8]">
+            <p className="mb-4 text-xs leading-6 text-steel-400">
               还有 <span className="text-challenge">{questions.length - answeredCount}</span> 题未作答。交卷后答案将锁定，无法修改。
             </p>
             <input className="field mb-4" placeholder="请输入「确认交卷」以完成提交" value={confirmText}

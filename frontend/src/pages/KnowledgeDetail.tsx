@@ -1,3 +1,4 @@
+import { Heading } from '@astryxdesign/core/Heading'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Highlight, themes } from 'prism-react-renderer'
@@ -49,7 +50,7 @@ export default function KnowledgeDetail() {
   const load = () => { if (kpId) learningApi.kp(kpId).then((r) => setKp(r.data)).catch((e) => toast(e.message, 'error')) }
   useEffect(load, [kpId])
 
-  if (!kp) return <div className="panel p-8 text-[13px] text-steel-400">正在加载知识点...</div>
+  if (!kp) return <div className="panel p-8 text-xs text-steel-400">正在加载知识点...</div>
 
   const examples = parseArr(kp.examples_json)
   const errors = parseArr(kp.common_errors_json)
@@ -75,16 +76,16 @@ export default function KnowledgeDetail() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <Link to="/learning" className="mb-3 inline-flex items-center gap-1 text-[12px] text-steel-400 hover:text-neon">
+          <Link to="/learning" className="mb-3 inline-flex items-center gap-1 text-xs text-steel-400 hover:text-neon">
             <ArrowLeft size={14} /> 返回知识目录
           </Link>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-[11px] text-steel-500">{kp.code}</span>
+            <span className="font-mono text-xs text-steel-500">{kp.code}</span>
             <span className="tag">{kp.difficulty}</span>
             {kp.mastered && <span className="tag-neon">已掌握</span>}
           </div>
-          <h1 className="mt-2 text-[22px] text-[#F1F5F9]">{kp.name}</h1>
-          <p className="mt-1 max-w-3xl text-[12px] leading-6 text-steel-400">{kp.summary}</p>
+          <Heading level={1}>{kp.name}</Heading>
+          <p className="mt-1 max-w-3xl text-xs leading-6 text-steel-400">{kp.summary}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button className="btn-ghost" onClick={toggleFav}>
@@ -109,11 +110,11 @@ export default function KnowledgeDetail() {
           <Panel title="语法结构">
             <div className="code-block text-neon-soft">{kp.syntax_md}</div>
           </Panel>
-          <Panel title="基础代码示例" action={<span className="text-[11px] text-steel-500">标准 C11</span>}>
+          <Panel title="基础代码示例" action={<span className="text-xs text-steel-500">标准 C11</span>}>
             <div className="space-y-4">
               {examples.length ? examples.map((ex: any, i: number) => (
                 <div key={i}>
-                  <div className="mb-2 text-[12px] text-steel-400">{ex.title || `示例 ${i + 1}`}</div>
+                  <div className="mb-2 text-xs text-steel-400">{ex.title || `示例 ${i + 1}`}</div>
                   <CodeView code={typeof ex === 'string' ? ex : ex.code} />
                 </div>
               )) : <CodeView code={''} />}
@@ -123,9 +124,9 @@ export default function KnowledgeDetail() {
             <Panel title="代码逐行解释">
               <div className="space-y-1.5">
                 {lines.map((l: any, i: number) => (
-                  <div key={i} className="flex gap-3 rounded border border-ink-700/50 bg-ink-900/40 px-3 py-1.5 text-[12px]">
-                    <span className="font-mono text-[11px] text-neon-dim">{typeof l === 'string' ? i + 1 : l.line}</span>
-                    <span className="text-[#94A3B8]">{typeof l === 'string' ? l : l.text}</span>
+                  <div key={i} className="flex gap-3 rounded border border-ink-700/50 bg-ink-900/40 px-3 py-1.5 text-xs">
+                    <span className="font-mono text-xs text-neon-dim">{typeof l === 'string' ? i + 1 : l.line}</span>
+                    <span className="text-steel-400">{typeof l === 'string' ? l : l.text}</span>
                   </div>
                 ))}
               </div>
@@ -138,15 +139,15 @@ export default function KnowledgeDetail() {
             {errors.length ? (
               <ul className="space-y-2">
                 {errors.map((e, i) => (
-                  <li key={i} className="flex gap-2 text-[12px] leading-6 text-[#94A3B8]">
+                  <li key={i} className="flex gap-2 text-xs leading-6 text-steel-400">
                     <AlertTriangle size={14} className="mt-1 shrink-0 text-amber-400" /> {e}
                   </li>
                 ))}
               </ul>
-            ) : <p className="text-[12px] text-steel-500">暂无记录</p>}
+            ) : <p className="text-xs text-steel-500">暂无记录</p>}
           </Panel>
           <Panel title="学习提示">
-            <div className="space-y-3 text-[12px] leading-6 text-[#94A3B8]">
+            <div className="space-y-3 text-xs leading-6 text-steel-400">
               <div className="flex gap-2"><Lightbulb size={14} className="mt-1 shrink-0 text-neon" />建议先阅读核心概念，再对照代码逐行理解执行过程。</div>
               <div className="flex gap-2"><Terminal size={14} className="mt-1 shrink-0 text-neon" />在线运行代码将在 M6 阶段接入隔离沙箱后开放。</div>
             </div>
@@ -159,9 +160,9 @@ export default function KnowledgeDetail() {
             </div>
           </Panel>
           <div className="grid grid-cols-3 gap-2">
-            <div className="panel p-3 text-center"><GitBranch size={14} className="mx-auto mb-1 text-steel-500" /><div className="text-[10px] text-steel-500">关联知识</div><div className="text-[13px] text-[#E8EDF4]">{parseArr(kp.related_kp_ids).length}</div></div>
-            <div className="panel p-3 text-center"><Target size={14} className="mx-auto mb-1 text-steel-500" /><div className="text-[10px] text-steel-500">配套练习</div><div className="text-[13px] text-[#E8EDF4]">题库</div></div>
-            <div className="panel p-3 text-center"><Bookmark size={14} className="mx-auto mb-1 text-steel-500" /><div className="text-[10px] text-steel-500">状态</div><div className="text-[13px] text-[#E8EDF4]">{kp.mastered ? '已掌握' : '学习中'}</div></div>
+            <div className="panel p-3 text-center"><GitBranch size={14} className="mx-auto mb-1 text-steel-500" /><div className="text-xs text-steel-500">关联知识</div><div className="text-xs text-text-primary">{parseArr(kp.related_kp_ids).length}</div></div>
+            <div className="panel p-3 text-center"><Target size={14} className="mx-auto mb-1 text-steel-500" /><div className="text-xs text-steel-500">配套练习</div><div className="text-xs text-text-primary">题库</div></div>
+            <div className="panel p-3 text-center"><Bookmark size={14} className="mx-auto mb-1 text-steel-500" /><div className="text-xs text-steel-500">状态</div><div className="text-xs text-text-primary">{kp.mastered ? '已掌握' : '学习中'}</div></div>
           </div>
         </div>
       </div>

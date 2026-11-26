@@ -1,16 +1,22 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { BookOpen, Search, ChevronRight, CircleCheck, Lock } from 'lucide-react'
 import { learningApi } from '../api/client'
-import { EmptyState, Panel, ProgressBar } from '../components/Layout'
+import { EmptyState, PageHeader, Panel, ProgressBar } from '../components/Layout'
 import type { Chapter, KnowledgePoint } from '../types'
 
 export default function Learning() {
   const [chapters, setChapters] = useState<Chapter[]>([])
   const [kps, setKps] = useState<KnowledgePoint[]>([])
   const [keyword, setKeyword] = useState('')
-  const [chapterId, setChapterId] = useState<string>('')
+  const [params] = useSearchParams()
+  const [chapterId, setChapterId] = useState<string>(params.get('chapter') || '')
   const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fromQuery = params.get('chapter')
+    if (fromQuery) setChapterId(fromQuery)
+  }, [params])
 
   useEffect(() => {
     Promise.all([learningApi.chapters(), learningApi.kps()])
@@ -27,41 +33,47 @@ export default function Learning() {
     return true
   }), [kps, keyword, chapterId])
 
-  if (loading) return <div className="panel p-8 text-[13px] text-steel-400">正在加载知识体系...</div>
+  if (loading) return <div className="panel p-8 text-sm text-steel-400">正在加载知识体系...</div>
 
   return (
     <div className="space-y-5">
-      <div>
-        <div className="mb-1 text-[11px] tracking-[0.18em] text-neon-dim">KNOWLEDGE CENTER / 知识学习中心</div>
-        <h1 className="text-[22px] text-[#F1F5F9]">C 语言知识体系</h1>
-        <p className="mt-1 text-[12px] text-steel-400">共 {chapters.length} 个章节、{kps.length} 个知识点，按章节逐步推进。</p>
-      </div>
+      <PageHeader
+        eyebrow="KNOWLEDGE CENTER // 知识课堂"
+        title="C 语言知识体系"
+        description={`共 ${chapters.length} 个章节、${kps.length} 个知识点。按章节推进，读完一个知识点即可直接进入针对性练习。`}
+        aside={
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="tag-learn"><BookOpen size={12} className="mr-1" /> {chapters.length} 个章节</span>
+            <span className="tag"><CircleCheck size={12} className="mr-1" /> {kps.filter((k) => k.mastered).length} 个已掌握</span>
+          </div>
+        }
+      />
 
       <div className="grid gap-4 lg:grid-cols-[260px_1fr]">
         <Panel title="章节目录">
           <div className="space-y-1">
             <button
               onClick={() => setChapterId('')}
-              className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[12px] transition ${
+              className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition ${
                 !chapterId ? 'bg-neon/10 text-neon' : 'text-steel-400 hover:bg-ink-800/60'
               }`}
             >
               <span>全部章节</span>
-              <span className="text-[11px] text-steel-500">{kps.length}</span>
+              <span className="text-xs text-steel-500">{kps.length}</span>
             </button>
             {chapters.map((ch) => (
               <button
                 key={ch.id}
                 onClick={() => setChapterId(ch.id)}
-                className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[12px] transition ${
+                className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition ${
                   chapterId === ch.id ? 'bg-neon/10 text-neon' : 'text-steel-400 hover:bg-ink-800/60'
                 }`}
               >
-                <span className="flex items-center gap-2">
-                  <span className="font-mono text-[10px] text-steel-500">{ch.code}</span>
+                <span className="flex min-w-0 flex-1 items-center gap-2">
+                  <span className="shrink-0 font-mono text-[11px] text-steel-500">{ch.code}</span>
                   <span className="truncate">{ch.name}</span>
                 </span>
-                <span className="text-[11px] text-steel-500">{ch.kp_count}</span>
+                <span className="shrink-0 pl-2 text-xs text-steel-500">{ch.kp_count}</span>
               </button>
             ))}
           </div>
@@ -78,7 +90,7 @@ export default function Learning() {
                 onChange={(e) => setKeyword(e.target.value)}
               />
             </div>
-            <div className="mt-3 flex items-center justify-between text-[11px] text-steel-500">
+            <div className="mt-3 flex items-center justify-between text-xs text-steel-500">
               <span>当前显示 {filtered.length} 个知识点</span>
               {chapterId && <button className="text-neon hover:underline" onClick={() => setChapterId('')}>清除章节筛选</button>}
             </div>
@@ -93,23 +105,23 @@ export default function Learning() {
                     <Link
                       key={kp.id}
                       to={`/learning/${kp.chapter_id}/${kp.id}`}
-                      className="group rounded-lg border border-ink-700/60 bg-ink-900/50 p-3.5 transition hover:border-neon/40 hover:bg-ink-800/60"
+                      className="group flex flex-col rounded-xl border border-ink-700/60 bg-ink-900/40 p-4 transition duration-200 hover:-translate-y-0.5 hover:border-learn/40 hover:bg-ink-800/50"
                     >
                       <div className="mb-2 flex items-center justify-between">
-                        <span className="font-mono text-[10px] text-steel-500">{kp.code}</span>
+                        <span className="font-mono text-xs text-steel-500">{kp.code}</span>
                         <span className="tag">{kp.difficulty}</span>
                       </div>
-                      <div className="mb-1.5 flex items-center gap-1.5 text-[13px] text-[#E8EDF4] group-hover:text-neon">
+                      <div className="mb-1.5 flex items-center gap-1.5 text-xs text-text-primary group-hover:text-neon">
                         {kp.mastered ? <CircleCheck size={14} className="text-neon" /> : <BookOpen size={14} className="text-steel-500" />}
                         {kp.name}
                       </div>
-                      <p className="mb-3 line-clamp-2 text-[11px] leading-5 text-steel-500">{kp.summary}</p>
-                      <div className="mb-1.5 flex justify-between text-[10px] text-steel-500">
+                      <p className="mb-3 line-clamp-2 text-xs leading-5 text-steel-500">{kp.summary}</p>
+                      <div className="mb-1.5 flex justify-between text-xs text-steel-500">
                         <span className="truncate">{ch?.name}</span>
                         <span>{kp.progress_pct}%</span>
                       </div>
                       <ProgressBar value={kp.progress_pct} />
-                      <div className="mt-2 flex items-center justify-between text-[10px] text-steel-500">
+                      <div className="mt-2 flex items-center justify-between text-xs text-steel-500">
                         <span>{kp.mastered ? '已掌握' : kp.progress_status === 'in_progress' ? '学习中' : '未开始'}</span>
                         <ChevronRight size={12} className="text-steel-600 group-hover:text-neon" />
                       </div>

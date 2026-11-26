@@ -1,6 +1,10 @@
 import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { Terminal, ShieldCheck, BookOpen, Dumbbell } from 'lucide-react'
+import { Heading } from '@astryxdesign/core/Heading'
+import { Text } from '@astryxdesign/core/Text'
+import { TextInput } from '@astryxdesign/core/TextInput'
+import { Button } from '@astryxdesign/core/Button'
 import { authApi } from '../api/client'
 import { useToast } from '../components/Layout'
 
@@ -49,67 +53,58 @@ export default function Login() {
                 <Terminal size={22} className="text-neon" />
               </div>
               <div>
-                <div className="text-[17px] font-medium text-[#F1F5F9]">C Learning OS</div>
-                <div className="text-[10px] tracking-[0.2em] text-steel-500">LEARNING WORKSTATION</div>
+                <Text weight="semibold">C Learning OS</Text>
+                <div className="mt-0.5"><Text type="supporting">LEARNING WORKSTATION</Text></div>
               </div>
             </div>
-            <h1 className="mb-3 text-[22px] leading-snug text-[#F1F5F9]">把 C 语言<br />变成一张可探索的地图</h1>
-            <p className="text-[13px] leading-6 text-steel-400">
+            <div className="mb-3"><Heading level={1} type="display-2">把 C 语言<br />变成一张可探索的地图</Heading></div>
+            <Text>
               知识学习、自主练习、模拟考试与学习档案，形成完整的训练闭环。所有进度真实保存。
-            </p>
+            </Text>
           </div>
           <div className="relative space-y-4">
-            <div className="flex items-center gap-3 text-[12px] text-steel-400">
-              <BookOpen size={16} className="text-learn" /> 75 个知识点 · 12 个章节
+            <div className="flex items-center gap-3">
+              <BookOpen size={16} className="text-learn" /> <Text type="supporting">75 个知识点 · 12 个章节</Text>
             </div>
-            <div className="flex items-center gap-3 text-[12px] text-steel-400">
-              <Dumbbell size={16} className="text-challenge" /> 123 道种子题目 · C11 标准
+            <div className="flex items-center gap-3">
+              <Dumbbell size={16} className="text-challenge" /> <Text type="supporting">123 道种子题目 · C11 标准</Text>
             </div>
-            <div className="flex items-center gap-3 text-[12px] text-steel-400">
-              <ShieldCheck size={16} className="text-neon" /> 练习与考试权限隔离
+            <div className="flex items-center gap-3">
+              <ShieldCheck size={16} className="text-neon" /> <Text type="supporting">练习与考试权限隔离</Text>
             </div>
           </div>
         </div>
 
         <div className="p-8 sm:p-10">
-          <div className="mb-7 flex border-b border-ink-700/60">
+          <div className="mb-7 flex gap-4 border-b border-ink-700/60">
             {(['login', 'register'] as const).map((m) => (
-              <button
+              <Button
                 key={m}
+                label={m === 'login' ? '登录' : '注册新账号'}
+                variant={mode === m ? 'primary' : 'ghost'}
+                size="sm"
                 onClick={() => setMode(m)}
-                className={`mr-6 border-b-2 pb-3 text-[13px] transition ${
-                  mode === m ? 'border-neon text-neon' : 'border-transparent text-steel-500 hover:text-steel-400'
-                }`}
-              >
-                {m === 'login' ? '登录' : '注册新账号'}
-              </button>
+              />
             ))}
           </div>
           <form onSubmit={submit} className="space-y-4">
-            <div>
-              <label className="mb-1.5 block text-[12px] text-steel-400">用户名</label>
-              <input className="field" value={username} onChange={(e) => setUsername(e.target.value)}
-                placeholder="至少 3 个字符" required />
-            </div>
+            <TextInput label="用户名" value={username} onChange={(v) => setUsername(v)}
+              placeholder="至少 3 个字符" isRequired width="100%" />
             {mode === 'register' && (
-              <div>
-                <label className="mb-1.5 block text-[12px] text-steel-400">邮箱（可选）</label>
-                <input className="field" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                  placeholder="用于找回账号" />
-              </div>
+              <TextInput label="邮箱" value={email} onChange={(v) => setEmail(v)}
+                type="email" placeholder="用于找回账号" isOptional width="100%" />
             )}
-            <div>
-              <label className="mb-1.5 block text-[12px] text-steel-400">密码</label>
-              <input className="field" type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-                placeholder="至少 6 个字符" required />
+            <TextInput label="密码" value={password} onChange={(v) => setPassword(v)}
+              type="password" placeholder="至少 6 个字符" isRequired width="100%" />
+            <div className="mt-2">
+              <Button type="submit" variant="primary" width="100%"
+                label={busy ? '处理中...' : mode === 'login' ? '进入工作台' : '创建账号并进入'}
+                isLoading={busy} />
             </div>
-            <button className="btn-primary mt-2 w-full" disabled={busy}>
-              {busy ? '处理中...' : mode === 'login' ? '进入工作台' : '创建账号并进入'}
-            </button>
           </form>
-          <p className="mt-6 text-center text-[11px] leading-5 text-steel-500">
-            本地账号密码存储使用 bcrypt 加盐哈希，会话使用 JWT
-          </p>
+          <div className="mt-6 text-center">
+            <Text type="supporting">本地账号密码存储使用 bcrypt 加盐哈希，会话使用 JWT</Text>
+          </div>
         </div>
       </div>
     </div>

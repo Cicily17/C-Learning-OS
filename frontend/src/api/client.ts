@@ -7,7 +7,10 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('clo_token')
-  if (token) config.headers.Authorization = `Bearer ${token}`
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+    config.headers['X-Auth-Token'] = token
+  }
   return config
 })
 
@@ -91,6 +94,8 @@ export const aiApi = {
   chat: (data: Record<string, unknown>) => api.post('/ai/chat', data),
   config: () => api.get('/ai/config'),
   run: (data: { code: string; stdin?: string }) => api.post('/ai/run', data),
+  codeHint: (data: { question: string; code: string; level: number; question_type: string; difficulty: string }) =>
+    api.post('/ai/code-hint', data),
 }
 
 export default api

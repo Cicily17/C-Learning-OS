@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta, timezone
+from typing import Optional
 
 import bcrypt
 import jwt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
@@ -31,7 +32,8 @@ def create_access_token(user_id: str) -> str:
 
 
 def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    authorization: Optional[str] = Header(default=None),
+    x_auth_token: Optional[str] = Header(default=None, alias="X-Auth-Token"),
     db: Session = Depends(get_db),
 ) -> User:
     credentials_error = HTTPException(
@@ -39,7 +41,13 @@ def get_current_user(
         detail="登录已失效，请重新登录",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    token = (x_auth_token or "").strip()
+    if not token and authorization:
+        parts = authorization.split(None, 1)
+        token = (parts[1] if len(parts) == 2 and parts[0].lower() == "bearer" else authorization).strip()
     try:
+        if not token:
+            raise credentials_error
         payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
         user_id = payload.get("sub")
         if not user_id:

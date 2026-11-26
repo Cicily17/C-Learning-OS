@@ -13,6 +13,15 @@ dist/
 .vite/
 *.tsbuildinfo
 
+# Astryx 主题预览产物（可由 `astryx theme` 重新生成，体积较大）
+frontend/themes/
+frontend/AGENTS.md
+frontend/GEMINI.md
+
+# 打包与发行产物
+build/
+*.zip
+
 # Environment & secrets
 .env
 .env.*

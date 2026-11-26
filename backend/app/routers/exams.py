@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from .. import game_service, models, schemas
+from .. import game_service, history_service, models, schemas
 from ..auth import get_current_user
 from ..database import get_db
 from .practice import is_correct
@@ -409,6 +409,7 @@ def _build_report(db: Session, session: models.ExamSession) -> dict:
     by_kp: dict[str, dict] = defaultdict(lambda: {"name": "", "earned": 0, "max": 0, "correct": 0, "total": 0})
     by_type: dict[str, dict] = defaultdict(lambda: {"name": "", "earned": 0, "max": 0, "correct": 0, "total": 0})
     wrong_items = []
+    items = []
     for ans, q, key, eq, kp in rows:
         kp_name = kp.name if kp else "未分类"
         kp_key = kp.id if kp else "unknown"
@@ -419,6 +420,23 @@ def _build_report(db: Session, session: models.ExamSession) -> dict:
             bucket["earned"] += ans.score_obtained or 0
             bucket["total"] += 1
             bucket["correct"] += 1 if ans.is_correct else 0
+        items.append({
+            "id": q.id,
+            "question_id": q.id,
+            "question_code": q.question_id,
+            "question_content": q.question_content,
+            "code_content": q.code_content,
+            "options_json": q.options_json,
+            "question_type": q.question_type,
+            "difficulty": q.difficulty,
+            "knowledge_point_name": kp_name,
+            "user_answer": ans.user_answer,
+            "correct_answer": key.correct_answer,
+            "explanation": key.explanation,
+            "is_correct": bool(ans.is_correct),
+            "score": eq.score,
+            "score_obtained": ans.score_obtained or 0,
+        })
         if not ans.is_correct:
             wrong_items.append({
                 "question_id": q.id,
@@ -466,6 +484,7 @@ def _build_report(db: Session, session: models.ExamSession) -> dict:
         "submitted_at": session.submitted_at.isoformat() if session.submitted_at else None,
         "knowledge_point_scores": kp_scores,
         "question_type_scores": type_scores,
+        "items": items,
         "wrong_items": wrong_items,
         "weak_knowledge_point_ids": [x["key"] for x in weak_kps if x["key"] != "unknown"],
         "suggestions": suggestions,
@@ -512,14 +531,24 @@ def exam_history(db: Session = Depends(get_db), user: models.User = Depends(get_
 @router.delete("/history/{session_id}", response_model=dict)
 def delete_exam_history(session_id: str, db: Session = Depends(get_db),
                         user: models.User = Depends(get_current_user)):
-    """删除一条考试记录，级联清理作答明细与学习记录。"""
+    """删除一条考试记录，并回退这次作答对错题本的影响。"""
     session = db.query(models.ExamSession).filter(
         models.ExamSession.id == session_id,
         models.ExamSession.user_id == user.id,
     ).first()
     if not session:
         raise HTTPException(status_code=404, detail="考试记录不存在")
-    db.query(models.ExamAnswer).filter(models.ExamAnswer.session_id == session_id).delete(synchronize_session=False)
+
+    answers = (
+        db.query(models.ExamAnswer)
+        .filter(models.ExamAnswer.session_id == session_id)
+        .all()
+    )
+    history_service.rollback_wrong_questions(db, user.id, answers)
+
+    db.query(models.ExamAnswer).filter(
+        models.ExamAnswer.session_id == session_id
+    ).delete(synchronize_session=False)
     db.query(models.LearningRecord).filter(
         models.LearningRecord.user_id == user.id,
         models.LearningRecord.record_type == "exam",
@@ -527,16 +556,27 @@ def delete_exam_history(session_id: str, db: Session = Depends(get_db),
     ).delete(synchronize_session=False)
     db.delete(session)
     db.commit()
-    return {"message": "考试记录已删除"}
+    return {"message": "考试记录已删除，正确率与错题统计已同步更新"}
 
 
 @router.delete("/history", response_model=dict)
 def clear_exam_history(db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
-    """清空当前用户的全部考试记录。"""
-    sessions = db.query(models.ExamSession).filter(models.ExamSession.user_id == user.id).all()
+    """清空当前用户已提交的考试记录（进行中的考试不会被动到）。"""
+    sessions = db.query(models.ExamSession).filter(
+        models.ExamSession.user_id == user.id,
+        models.ExamSession.status == "submitted",
+    ).all()
     ids = [s.id for s in sessions]
     if ids:
-        db.query(models.ExamAnswer).filter(models.ExamAnswer.session_id.in_(ids)).delete(synchronize_session=False)
+        answers = (
+            db.query(models.ExamAnswer)
+            .filter(models.ExamAnswer.session_id.in_(ids))
+            .all()
+        )
+        history_service.rollback_wrong_questions(db, user.id, answers)
+        db.query(models.ExamAnswer).filter(
+            models.ExamAnswer.session_id.in_(ids)
+        ).delete(synchronize_session=False)
         db.query(models.LearningRecord).filter(
             models.LearningRecord.user_id == user.id,
             models.LearningRecord.record_type == "exam",
@@ -545,4 +585,4 @@ def clear_exam_history(db: Session = Depends(get_db), user: models.User = Depend
     for s in sessions:
         db.delete(s)
     db.commit()
-    return {"message": f"已清空 {len(ids)} 条考试记录"}
+    return {"message": f"已清空 {len(ids)} 条考试记录，正确率与错题统计已同步更新"}

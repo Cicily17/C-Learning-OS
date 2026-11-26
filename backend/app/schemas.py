@@ -190,6 +190,15 @@ class CodeRunIn(BaseModel):
     stdin: str = ""
 
 
+class CodeHintIn(BaseModel):
+    """代码题三级提示：只给思路，不给完整答案。考试同样可用。"""
+    question: str = Field(default="", max_length=6000)
+    code: str = Field(default="", max_length=8000)
+    level: int = Field(default=1, ge=1, le=3)
+    question_type: str = Field(default="编程题", max_length=32)
+    difficulty: str = Field(default="中等", max_length=16)
+
+
 class ExamConfigIn(BaseModel):
     """考试配置。答案由服务端独立保存，配置接口不接受任何答案字段。"""
     name: str = Field(min_length=1, max_length=128)

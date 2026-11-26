@@ -43,6 +43,17 @@ export default {
         sans: ['Inter', 'Segoe UI', 'Microsoft YaHei', 'sans-serif'],
         mono: ['JetBrains Mono', 'Consolas', 'monospace'],
       },
+      // 字号统一走 Astryx 主题的语义 token，避免页面里散落的硬编码小字号
+      fontSize: {
+        '2xs': ['var(--text-supporting-size)', { lineHeight: '1.5' }],
+        xs: ['var(--text-supporting-size)', { lineHeight: '1.5' }],
+        sm: ['var(--text-label-size)', { lineHeight: '1.45' }],
+        base: ['var(--text-body-size)', { lineHeight: '1.5' }],
+        lg: ['var(--text-large-size)', { lineHeight: '1.4' }],
+        xl: ['var(--text-heading-2-size)', { lineHeight: '1.35' }],
+        '2xl': ['var(--text-heading-1-size)', { lineHeight: '1.3' }],
+        '3xl': ['var(--text-display-1-size)', { lineHeight: '1.25' }],
+      },
       boxShadow: {
         panel: '0 0 0 1px rgba(88,235,4,0.05), 0 18px 44px rgba(0,0,0,0.45)',
         'glow-green': '0 0 16px rgba(88,235,4,0.28)',

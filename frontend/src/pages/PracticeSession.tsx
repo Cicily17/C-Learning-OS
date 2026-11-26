@@ -5,9 +5,12 @@ import {
   ArrowLeft, ArrowRight, Flag, Bookmark, Lightbulb, Eye, Send,
   Timer, CheckCircle2, XCircle, ChevronLeft,
 } from 'lucide-react'
-import { practiceApi } from '../api/client'
+import { aiApi, practiceApi } from '../api/client'
 import { Panel, ProgressBar, useToast } from '../components/Layout'
+import CodeAnswerWorkspace from '../components/CodeAnswerWorkspace'
 import type { Question } from '../types'
+
+const isCodeQuestion = (q: Question) => q.question_type === '编程题' || q.question_type === '代码补全题'
 
 export default function PracticeSession() {
   const { id } = useParams()
@@ -19,7 +22,7 @@ export default function PracticeSession() {
   const [results, setResults] = useState<Record<string, boolean>>({})
   const [limit, setLimit] = useState<number | null>(null)
   const [elapsed, setElapsed] = useState(0)
-  const [hint, setHint] = useState<{ level: number; content: string } | null>(null)
+  const [hint, setHint] = useState<{ level: number; title?: string; content: string } | null>(null)
   const [revealed, setRevealed] = useState<{ answer: string; explanation: string } | null>(null)
   const [favoriteMap, setFavoriteMap] = useState<Record<string, boolean>>({})
 
@@ -93,6 +96,16 @@ export default function PracticeSession() {
     } catch (e) { toast((e as Error).message, 'error') }
   }
 
+  const askCodeHint = async (level: number) => {
+    if (!q) return { level, title: '思路提示', content: '' }
+    const r = await aiApi.codeHint({
+      question: q.question_content, code: answers[q.id] || '', level,
+      question_type: q.question_type, difficulty: q.difficulty,
+    })
+    setHint(r.data)
+    return r.data
+  }
+
   const reveal = async () => {
     if (!id || !q) return
     try {
@@ -123,7 +136,7 @@ export default function PracticeSession() {
     } catch (e) { toast((e as Error).message, 'error') }
   }
 
-  if (!questions.length) return <div className="panel p-8 text-[13px] text-steel-400">正在加载题目...</div>
+  if (!questions.length) return <div className="panel p-8 text-xs text-steel-400">正在加载题目...</div>
   if (!q) return null
 
   const fmt = (s: number) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
@@ -135,9 +148,9 @@ export default function PracticeSession() {
           <ChevronLeft size={15} /> 退出练习
         </button>
         <div className="flex items-center gap-4">
-          <div className="text-[12px] text-steel-400">已答 <span className="text-neon">{answeredCount}</span> / {questions.length}</div>
-          <div className="text-[12px] text-steel-400">当前正确 <span className="text-neon">{correctCount}</span></div>
-          <div className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-mono text-[13px] ${
+          <div className="text-xs text-steel-400">已答 <span className="text-neon">{answeredCount}</span> / {questions.length}</div>
+          <div className="text-xs text-steel-400">当前正确 <span className="text-neon">{correctCount}</span></div>
+          <div className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-mono text-xs ${
             remaining !== null && remaining < 60 ? 'border-danger/60 text-danger' : 'border-neon/30 text-neon'
           }`}>
             <Timer size={14} /> {fmt(remaining === null ? elapsed : remaining)}
@@ -146,12 +159,77 @@ export default function PracticeSession() {
       </div>
       <ProgressBar value={(answeredCount / questions.length) * 100} />
 
+      {isCodeQuestion(q) ? (
+        <div className="space-y-4">
+          <Panel title="题目导航">
+            <div className="flex flex-wrap gap-1.5">
+              {questions.map((item, i) => (
+                <button key={item.id} onClick={() => go(i)}
+                  className={`flex h-8 min-w-8 items-center justify-center rounded border px-2 text-xs transition ${
+                    i === index ? 'border-neon bg-neon/15 text-neon'
+                    : answers[item.id] ? 'border-neon/30 bg-neon/5 text-neon-dim'
+                    : 'border-ink-700/60 text-steel-500 hover:border-ink-600'
+                  }`}>
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-ink-700/50 pt-3">
+              <button className="btn-ghost text-xs" disabled={index === 0} onClick={() => go(index - 1)}>
+                <ArrowLeft size={13} /> 上一题
+              </button>
+              <span className="text-xs text-steel-500">第 {index + 1} / {questions.length} 题 · 已答 {answeredCount}</span>
+              <button className="btn-ghost text-xs" disabled={index === questions.length - 1} onClick={() => go(index + 1)}>
+                下一题 <ArrowRight size={13} />
+              </button>
+            </div>
+          </Panel>
+
+          <CodeAnswerWorkspace
+            question={q}
+            code={answers[q.id] || q.code_content || ''}
+            onCodeChange={(v) => setAnswers((p) => ({ ...p, [q.id]: v }))}
+            mode="practice"
+            onHint={askCodeHint}
+            hint={hint}
+            meta={[
+              { label: '提示层级', value: String(hint?.level || q.hint_level_used || 0) },
+              { label: '本题状态', value: results[q.id] === undefined ? '待提交' : results[q.id] ? '正确' : '待改进' },
+            ]}
+            actions={
+              <>
+                <div className="flex flex-wrap gap-2">
+                  <button className="btn-ghost text-xs" onClick={toggleFav}>
+                    <Bookmark size={14} fill={favoriteMap[q.id] ? 'currentColor' : 'none'} /> {favoriteMap[q.id] ? '已收藏' : '收藏'}
+                  </button>
+                  <button className="btn-ghost text-xs" onClick={reveal}><Eye size={14} /> 参考答案</button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button className="btn-ghost text-xs" onClick={() => go(Math.min(questions.length - 1, index + 1))}>
+                    <Flag size={14} /> 跳过
+                  </button>
+                  <button className="btn-primary text-xs" onClick={submit}><Send size={14} /> 提交并查看结果</button>
+                </div>
+              </>
+            }
+          />
+
+          {revealed && (
+            <Panel title="参考答案（练习模式可见）">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-xs text-neon"><CheckCircle2 size={15} /> 正确答案：{revealed.answer}</div>
+                <div className="rounded-lg border border-ink-700/60 bg-ink-900/50 p-3 text-xs leading-6 text-steel-400">{revealed.explanation}</div>
+              </div>
+            </Panel>
+          )}
+        </div>
+      ) : (
       <div className="grid gap-4 xl:grid-cols-[210px_1fr_260px]">
         <Panel title="题目导航" className="h-fit">
           <div className="magnet-grid grid grid-cols-5 gap-1.5">
             {questions.map((item, i) => (
               <button key={item.id} onClick={() => go(i)}
-                className={`flex h-8 items-center justify-center rounded border text-[11px] transition ${
+                className={`flex h-8 items-center justify-center rounded border text-xs transition ${
                   i === index ? 'border-neon bg-neon/15 text-neon'
                   : answers[item.id] ? 'border-neon/30 bg-neon/5 text-neon-dim'
                   : 'border-ink-700/60 text-steel-500 hover:border-ink-600'
@@ -160,16 +238,16 @@ export default function PracticeSession() {
               </button>
             ))}
           </div>
-          <div className="mt-4 space-y-2 border-t border-ink-700/50 pt-3 text-[11px] text-steel-500">
-            <div className="flex justify-between"><span>单选题 / 判断题</span><span className="text-[#CBD5E1]">{options.length > 0 ? q.question_type : '—'}</span></div>
-            <div className="flex justify-between"><span>难度</span><span className="text-[#CBD5E1]">{q.difficulty}</span></div>
-            <div className="flex justify-between"><span>题号</span><span className="font-mono text-[#CBD5E1]">{q.question_id}</span></div>
+          <div className="mt-4 space-y-2 border-t border-ink-700/50 pt-3 text-xs text-steel-500">
+            <div className="flex justify-between"><span>单选题 / 判断题</span><span className="text-steel-300">{options.length > 0 ? q.question_type : '—'}</span></div>
+            <div className="flex justify-between"><span>难度</span><span className="text-steel-300">{q.difficulty}</span></div>
+            <div className="flex justify-between"><span>题号</span><span className="font-mono text-steel-300">{q.question_id}</span></div>
           </div>
           <div className="mt-4 flex gap-2">
-            <button className="btn-ghost flex-1 text-[11px]" disabled={index === 0} onClick={() => go(index - 1)}>
+            <button className="btn-ghost flex-1 text-xs" disabled={index === 0} onClick={() => go(index - 1)}>
               <ArrowLeft size={13} /> 上一题
             </button>
-            <button className="btn-ghost flex-1 text-[11px]" disabled={index === questions.length - 1} onClick={() => go(index + 1)}>
+            <button className="btn-ghost flex-1 text-xs" disabled={index === questions.length - 1} onClick={() => go(index + 1)}>
               下一题 <ArrowRight size={13} />
             </button>
           </div>
@@ -178,7 +256,7 @@ export default function PracticeSession() {
         <div className="space-y-4">
           <Panel title={`第 ${index + 1} 题 / ${questions.length}`}
             action={<div className="flex items-center gap-2"><span className="tag">{q.question_type}</span><span className="tag">{q.difficulty}</span></div>}>
-            <div className="mb-4 whitespace-pre-wrap text-[14px] leading-7 text-[#E8EDF4]">{q.question_content}</div>
+            <div className="mb-4 whitespace-pre-wrap text-sm leading-7 text-text-primary">{q.question_content}</div>
             {q.code_content && (
               <div className="mb-5">
                 <Highlight theme={themes.vsDark} code={q.code_content.trim()} language="c">
@@ -200,10 +278,10 @@ export default function PracticeSession() {
                 const active = (answers[q.id] || '').split(',').includes(opt.key)
                 return (
                   <button key={opt.key} onClick={() => choose(opt.key)}
-                    className={`flex w-full items-start gap-3 rounded-lg border px-3.5 py-3 text-left text-[13px] transition active:scale-[0.995] ${
-                      active ? 'border-neon/60 bg-neon/10 text-neon' : 'border-ink-700/60 bg-ink-900/40 text-[#CBD5E1] hover:border-ink-600'
+                    className={`flex w-full items-start gap-3 rounded-lg border px-3.5 py-3 text-left text-xs transition active:scale-[0.995] ${
+                      active ? 'border-neon/60 bg-neon/10 text-neon' : 'border-ink-700/60 bg-ink-900/40 text-steel-300 hover:border-ink-600'
                     }`}>
-                    <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded border text-[11px] ${
+                    <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded border text-xs ${
                       active ? 'border-neon bg-neon text-ink-950' : 'border-ink-600 text-steel-400'
                     }`}>{opt.key}</span>
                     <span className="leading-6">{opt.text}</span>
@@ -218,14 +296,14 @@ export default function PracticeSession() {
 
             <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-ink-700/50 pt-4">
               <div className="flex gap-2">
-                <button className="btn-ghost text-[12px]" onClick={toggleFav}>
+                <button className="btn-ghost text-xs" onClick={toggleFav}>
                   <Bookmark size={14} fill={favoriteMap[q.id] ? 'currentColor' : 'none'} /> {favoriteMap[q.id] ? '已收藏' : '收藏'}
                 </button>
-                <button className="btn-ghost text-[12px]" onClick={() => go(Math.min(questions.length - 1, index + 1))}>
+                <button className="btn-ghost text-xs" onClick={() => go(Math.min(questions.length - 1, index + 1))}>
                   <Flag size={14} /> 跳过
                 </button>
               </div>
-              <button className="btn-primary text-[12px]" onClick={submit}>
+              <button className="btn-primary text-xs" onClick={submit}>
                 <Send size={14} /> 提交并查看结果
               </button>
             </div>
@@ -233,21 +311,21 @@ export default function PracticeSession() {
         </div>
 
         <div className="space-y-4">
-          <Panel title="AI 分层提示" action={<span className="text-[10px] text-ai">✦ 智能辅助</span>}>
+          <Panel title="AI 分层提示" action={<span className="text-xs text-ai">✦ 智能辅助</span>}>
             <div className="space-y-2">
               {[1, 2, 3].map((n) => (
-                <button key={n} className="btn-ghost w-full justify-start border-ai/25 text-[12px] hover:border-ai/60 hover:text-ai" onClick={() => askHint(n)}>
+                <button key={n} className="btn-ghost w-full justify-start border-ai/25 text-xs hover:border-ai/60 hover:text-ai" onClick={() => askHint(n)}>
                   <Lightbulb size={14} className="text-ai" /> {n} 级提示{hint?.level === n ? ' · 当前' : ''}
                 </button>
               ))}
             </div>
             {hint && (
-              <div className="mt-3 rounded-lg border border-ai/25 bg-ai/5 p-3 text-[12px] leading-6 text-[#C8D6E5]">
-                <div className="mb-1.5 text-[11px] text-ai">✦ 提示 · Level {hint.level}</div>
+              <div className="mt-3 rounded-lg border border-ai/25 bg-ai/5 p-3 text-xs leading-6 text-steel-300">
+                <div className="mb-1.5 text-xs text-ai">✦ 提示 · Level {hint.level}</div>
                 {hint.content}
               </div>
             )}
-            <p className="mt-3 text-[10px] leading-5 text-steel-500">
+            <p className="mt-3 text-xs leading-5 text-steel-500">
               提示不直接给出答案。配置大模型密钥后可切换为 AI 生成提示。
             </p>
           </Panel>
@@ -255,10 +333,10 @@ export default function PracticeSession() {
           <Panel title="参考答案">
             {revealed ? (
               <div className="space-y-3">
-                <div className="flex items-center gap-2 text-[13px] text-neon">
+                <div className="flex items-center gap-2 text-xs text-neon">
                   <CheckCircle2 size={15} /> 正确答案：{revealed.answer}
                 </div>
-                <div className="rounded-lg border border-ink-700/60 bg-ink-900/50 p-3 text-[12px] leading-6 text-[#94A3B8]">
+                <div className="rounded-lg border border-ink-700/60 bg-ink-900/50 p-3 text-xs leading-6 text-steel-400">
                   {revealed.explanation}
                 </div>
               </div>
@@ -268,17 +346,18 @@ export default function PracticeSession() {
           </Panel>
 
           <Panel title="本题状态">
-            <div className="space-y-2 text-[12px]">
+            <div className="space-y-2 text-xs">
               <div className="flex justify-between"><span className="text-steel-500">作答</span>
                 <span className={answers[q.id] ? 'text-neon' : 'text-steel-500'}>{answers[q.id] ? '已作答' : '未作答'}</span></div>
               <div className="flex justify-between"><span className="text-steel-500">提示层级</span>
-                <span className="text-[#CBD5E1]">{hint?.level || q.hint_level_used || 0}</span></div>
+                <span className="text-steel-300">{hint?.level || q.hint_level_used || 0}</span></div>
               <div className="flex justify-between"><span className="text-steel-500">查看过答案</span>
                 <span className={revealed ? 'text-challenge' : 'text-steel-500'}>{revealed ? '是' : '否'}</span></div>
             </div>
           </Panel>
         </div>
       </div>
+      )}
     </div>
   )
 }
