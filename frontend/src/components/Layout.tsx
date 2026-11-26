@@ -5,13 +5,14 @@ import { createPortal } from 'react-dom'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, BookOpen, Dumbbell, ClipboardList, Gamepad2,
-  Archive, Terminal, LogOut, Radio, Sparkles, Flame, Zap,
+  Archive, LogOut, Radio, Sparkles, Flame, Zap,
   AlertTriangle, X, ArrowRight, CircleAlert, Info,
 } from 'lucide-react'
 import { Text } from '@astryxdesign/core/Text'
 import { Heading } from '@astryxdesign/core/Heading'
 import { Button } from '@astryxdesign/core/Button'
 import { gameApi } from '../api/client'
+import { BrandLockup, CatAvatar, MascotMark } from './Brand'
 import type { ToastMessage, User } from '../types'
 
 type ToastCtx = (text: string, kind?: ToastMessage['kind']) => void
@@ -142,17 +143,9 @@ export function Layout({ children }: { children: ReactNode }) {
 
       {/* 左侧固定导航 */}
       <aside className="relative z-10 hidden min-h-screen flex-col border-r border-ink-700/60 bg-[#0a0f15]/95 px-3 py-5 backdrop-blur-xl lg:flex">
-        {/* 品牌 / 终端标识 */}
-        <div className="mb-7 flex items-center gap-3 px-2">
-          <div className="relative flex h-11 w-11 items-center justify-center border border-neon/50 bg-neon/[0.07]"
-            style={{ clipPath: 'polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%)' }}>
-            <Terminal size={19} className="text-neon" />
-            <span className="absolute right-0 top-0 h-2 w-2 rounded-full bg-neon shadow-glow-green animate-pulse-soft" />
-          </div>
-          <div>
-            <div className="text-sm font-semibold tracking-wide text-text-primary">C LEARNING OS</div>
-            <div className="mt-0.5 font-mono text-[11px] uppercase tracking-[0.16em] text-steel-500">C11 · SECTOR CONSOLE</div>
-          </div>
+        {/* 品牌：C//CAT 编译猫 */}
+        <div className="mb-7 px-2">
+          <BrandLockup />
         </div>
 
         <nav className="flex flex-1 flex-col gap-5">
@@ -225,10 +218,7 @@ export function Layout({ children }: { children: ReactNode }) {
         <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-ink-700/60 bg-[#080d12]/95 px-4 py-3 backdrop-blur-xl sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex items-center gap-2 lg:hidden">
-              <div className="flex h-8 w-8 items-center justify-center border border-neon/40 bg-neon/10"
-                style={{ clipPath: 'polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%)' }}>
-                <Terminal size={15} className="text-neon" />
-              </div>
+              <MascotMark size={38} />
             </div>
             <div className="min-w-0">
               <div className="truncate text-sm font-medium text-text-primary">{current.label}</div>
@@ -354,7 +344,7 @@ export function EmptyState({ text, hint, action, icon }: {
   return (
     <div className="flex min-h-[140px] flex-col items-center justify-center gap-3 px-4 py-6 text-center">
       <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-dashed border-ink-600/80 bg-ink-900/40 text-steel-500">
-        {icon || <Terminal size={18} />}
+        {icon || <CatAvatar size={26} />}
       </div>
       <div>
         <div className="text-sm text-steel-300">{text}</div>

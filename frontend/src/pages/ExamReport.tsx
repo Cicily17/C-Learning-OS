@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Download, ChevronLeft, Trophy, Target, Clock, Lightbulb, AlertTriangle, ListChecks } from 'lucide-react'
 import { examsApi } from '../api/client'
+import { AnswerText } from '../components/AnswerText'
 import { EmptyState, Panel, ProgressBar, useToast } from '../components/Layout'
 import AnswerReview from '../components/AnswerReview'
 import type { ExamReport as Report, ScoreBucket } from '../types'
@@ -135,11 +136,11 @@ export default function ExamReport() {
                 <div className="grid gap-2 sm:grid-cols-2">
                   <div className="rounded border border-red-500/25 bg-red-500/5 p-3 text-xs leading-6">
                     <div className="mb-1 text-xs text-red-300">你的答案</div>
-                    <span className="text-text-primary">{w.user_answer || '未作答'}</span>
+                    <AnswerText answer={w.user_answer} type={w.question_type} tone="plain" caption="你的作答 · C11" />
                   </div>
                   <div className="rounded border border-neon/25 bg-neon/5 p-3 text-xs leading-6">
                     <div className="mb-1 text-xs text-neon">正确答案</div>
-                    <span className="text-neon">{w.correct_answer}</span>
+                    <AnswerText answer={w.correct_answer} type={w.question_type} caption="参考答案 · C11" />
                   </div>
                 </div>
                 <div className="mt-2 rounded border border-ink-700/50 p-3 text-xs leading-6 text-steel-400">

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { CheckCircle2, XCircle, Keyboard } from 'lucide-react'
 import { Button } from '@astryxdesign/core/Button'
 import { EmptyState } from './Layout'
+import { AnswerText } from './AnswerText'
 
 export interface ReviewItem {
   id?: string
@@ -174,13 +175,12 @@ export default function AnswerReview({ items, defaultFilter = 'all', showFilter 
             item?.is_correct ? 'border-neon/30 bg-neon/5' : 'border-danger/35 bg-danger/5'
           }`}>
             <div className="mb-1 text-steel-500">你的答案</div>
-            <div className={item?.is_correct ? 'text-neon' : 'text-danger'}>
-              {item?.user_answer || <span className="text-steel-500">（未作答）</span>}
-            </div>
+            <AnswerText answer={item?.user_answer} type={item?.question_type}
+              tone={item?.is_correct ? 'neon' : 'danger'} caption="你的作答 · C11" />
           </div>
           <div className="rounded-lg border border-neon/30 bg-neon/5 p-3 text-xs leading-6">
             <div className="mb-1 text-steel-500">正确答案</div>
-            <div className="text-neon">{item?.correct_answer || '—'}</div>
+            <AnswerText answer={item?.correct_answer} type={item?.question_type} caption="参考答案 · C11" />
           </div>
           <div className="rounded-lg border border-ink-700/60 bg-ink-950/40 p-3 text-xs leading-6 text-steel-400">
             <div className="mb-1 text-neon">解析</div>

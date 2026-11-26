@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
-import { Terminal, ShieldCheck, BookOpen, Dumbbell } from 'lucide-react'
+import { ShieldCheck, BookOpen, Dumbbell } from 'lucide-react'
 import { Heading } from '@astryxdesign/core/Heading'
 import { Text } from '@astryxdesign/core/Text'
 import { TextInput } from '@astryxdesign/core/TextInput'
 import { Button } from '@astryxdesign/core/Button'
 import { authApi } from '../api/client'
+import { BrandLockup, MascotSticker } from '../components/Brand'
 import { useToast } from '../components/Layout'
 
 export default function Login() {
@@ -48,14 +49,8 @@ export default function Login() {
           <div className="pointer-events-none absolute -left-20 -top-20 h-64 w-64 rounded-full bg-learn/15 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-24 -right-16 h-72 w-72 rounded-full bg-ai/15 blur-3xl" />
           <div className="relative">
-            <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-neon/40 bg-neon/10">
-                <Terminal size={22} className="text-neon" />
-              </div>
-              <div>
-                <Text weight="semibold">C Learning OS</Text>
-                <div className="mt-0.5"><Text type="supporting">LEARNING WORKSTATION</Text></div>
-              </div>
+            <div className="mb-6">
+              <BrandLockup />
             </div>
             <div className="mb-3"><Heading level={1} type="display-2">把 C 语言<br />变成一张可探索的地图</Heading></div>
             <Text>
@@ -72,6 +67,9 @@ export default function Login() {
             <div className="flex items-center gap-3">
               <ShieldCheck size={16} className="text-neon" /> <Text type="supporting">练习与考试权限隔离</Text>
             </div>
+          </div>
+          <div className="pointer-events-none absolute bottom-2 right-1 hidden lg:block">
+            <MascotSticker size={122} />
           </div>
         </div>
 

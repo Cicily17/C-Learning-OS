@@ -66,7 +66,7 @@ def ai_status(db) -> dict:
     return {"configured": False, "source": "none", "provider": "", "model": "", "base_url": ""}
 
 
-def _call_llm(db, prompt: str) -> str:
+def _call_llm(db, prompt: str, max_tokens: int = 1200, temperature: float = 0.3) -> str:
     row = _find_provider_config(db)
     if row and row.api_key_encrypted:
         api_key, model, base_url = row.api_key_encrypted, row.model_name, row.base_url
@@ -81,8 +81,8 @@ def _call_llm(db, prompt: str) -> str:
             {"role": "system", "content": "你是 C 语言教学助手，回答简洁、准确、有教学价值。使用中文。"},
             {"role": "user", "content": prompt[:6000]},
         ],
-        "temperature": 0.3,
-        "max_tokens": 1200,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
     }
     with httpx.Client(timeout=30.0) as client:
         response = client.post(

@@ -2,6 +2,7 @@ import { Heading } from '@astryxdesign/core/Heading'
 import { useEffect, useRef, useState } from 'react'
 import { Bot, Send, Terminal, Play, CircleStop, ShieldAlert, Copy, CheckCircle2, AlertTriangle } from 'lucide-react'
 import { aiApi } from '../api/client'
+import { CatAvatar, MascotMark } from '../components/Brand'
 import { Panel, useToast } from '../components/Layout'
 
 const SAMPLE_CODE = `#include <stdio.h>
@@ -24,7 +25,7 @@ export default function AiAssistant() {
   const [mode, setMode] = useState<'practice' | 'exam'>('practice')
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<Msg[]>([
-    { role: 'ai', text: '你好，我是 C Learning OS 学习助手。可以问我概念解释、代码分析、编译错误，或让我帮你运行一段 C 代码。' },
+    { role: 'ai', text: '喵～我是 C//CAT，你的编译猫搭子。概念解释、代码分析、编译报错都可以丢给我，也能帮你在代码实验室里跑一段 C。' },
   ])
   const [chatting, setChatting] = useState(false)
   const [status, setStatus] = useState<any>(null)
@@ -62,12 +63,20 @@ export default function AiAssistant() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <div className="mb-1 text-xs tracking-[0.18em] text-neon-dim">AI ASSISTANT / 智能学习助手</div>
-        <Heading level={1}>AI 学习助手与代码实验室</Heading>
-        <p className="mt-1 text-xs text-steel-400">
-          助手支持概念解释、代码分析、编译错误解读；代码运行采用受限 C 子集解释器，不会执行任意二进制。
-        </p>
+      <div className="flex items-start gap-4">
+        <div className="mt-1 hidden shrink-0 sm:block">
+          <MascotMark size={62} />
+        </div>
+        <div className="min-w-0">
+          <div className="mb-1 flex flex-wrap items-center gap-2 text-xs tracking-[0.18em] text-neon-dim">
+            AI ASSISTANT / 智能学习助手
+            <span className="rounded border border-neon/25 bg-neon/[0.06] px-1.5 py-0.5 font-mono text-[10px] tracking-normal text-neon">C//CAT</span>
+          </div>
+          <Heading level={1}>AI 学习助手与代码实验室</Heading>
+          <p className="mt-1 max-w-3xl text-xs leading-6 text-steel-400">
+            编译猫在线：概念解释、代码分析、编译错误都能问它。代码运行采用受限 C 子集解释器，只执行白名单语法，不会运行任意二进制。
+          </p>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -92,30 +101,44 @@ export default function AiAssistant() {
               考试模式已禁用所有辅助解题功能。交卷后切回练习模式即可继续使用。
             </div>
           )}
-          <div className="mb-3 h-[360px] space-y-3 overflow-y-auto rounded-lg border border-ink-700/60 bg-ink-950/50 p-3">
+          <div className="mb-3 h-[380px] space-y-3 overflow-y-auto rounded-lg border border-ink-700/60 bg-ink-950/50 p-3">
             {messages.map((m, i) => (
-              <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[88%] whitespace-pre-wrap rounded-lg border px-3 py-2 text-xs leading-6 ${
-                  m.role === 'user' ? 'border-neon/30 bg-neon/10 text-neon'
-                  : m.source === 'error' ? 'border-red-500/30 bg-red-500/5 text-red-200'
-                  : 'border-ink-700/60 bg-ink-900/60 text-steel-300'
+              <div key={i} className={`flex items-end gap-2 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                {m.role === 'ai' && <CatAvatar size={26} className="mb-0.5" />}
+                <div className={`max-w-[84%] whitespace-pre-wrap rounded-xl border px-3 py-2 text-xs leading-6 ${
+                  m.role === 'user' ? 'rounded-br-sm border-neon/30 bg-neon/10 text-neon'
+                  : m.source === 'error' ? 'rounded-bl-sm border-red-500/30 bg-red-500/5 text-red-200'
+                  : 'rounded-bl-sm border-ink-700/60 bg-ink-900/60 text-steel-300'
                 }`}>
-                  {m.role === 'ai' && <div className="mb-1 text-xs text-steel-500">{m.source === 'llm' ? 'AI 生成' : '内置规则引擎'}</div>}
+                  {m.role === 'ai' && (
+                    <div className="mb-1 flex items-center gap-1.5 text-[10px] text-steel-500">
+                      <span className="h-1 w-1 rounded-full bg-neon/70" />
+                      {m.source === 'llm' ? '编译猫 · AI 生成' : '编译猫 · 内置规则'}
+                    </div>
+                  )}
                   {m.text}
                 </div>
               </div>
             ))}
-            {chatting && <div className="text-xs text-steel-500">正在思考...</div>}
+            {chatting && (
+              <div className="flex items-end gap-2">
+                <CatAvatar size={26} className="mb-0.5" />
+                <div className="rounded-xl rounded-bl-sm border border-ink-700/60 bg-ink-900/60 px-3 py-2 text-xs text-steel-500">
+                  编译猫正在翻书<span className="animate-pulse-soft">…</span>
+                </div>
+              </div>
+            )}
             <div ref={bottomRef} />
           </div>
-          <div className="mb-2 flex flex-wrap gap-1.5">
+          <div className="mb-2 flex flex-wrap items-center gap-1.5">
+            <span className="mr-1 text-[10px] text-steel-500">试着这样问</span>
             {['解释指针与数组的区别', '这段代码有什么问题？', 'sizeof 和 strlen 的区别'].map((q) => (
               <button key={q} disabled={mode === 'exam'} onClick={() => send(q)}
                 className="rounded border border-ink-700/60 px-2 py-1 text-xs text-steel-400 transition hover:border-neon/40 hover:text-neon disabled:opacity-40">{q}</button>
             ))}
           </div>
           <div className="flex gap-2">
-            <input className="field" placeholder={mode === 'exam' ? '考试模式下不可输入' : '输入问题、代码片段或编译报错...'}
+            <input className="field" placeholder={mode === 'exam' ? '考试模式下不可输入' : '问问编译猫：这段指针为什么输出 9？'}
               value={input} disabled={mode === 'exam'}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') send() }} />
@@ -147,7 +170,10 @@ export default function AiAssistant() {
               )}
             </div>
             {!runResult ? (
-              <div className="py-6 text-center text-xs text-steel-600">点击「运行代码」查看结果</div>
+              <div className="flex flex-col items-center gap-1.5 py-3">
+                <MascotMark size={44} />
+                <div className="text-center text-xs text-steel-600">点击「运行代码」，编译猫帮你跑一遍</div>
+              </div>
             ) : (
               <div className="space-y-2 text-xs leading-6">
                 <div className={`flex items-center gap-1.5 ${runResult.ok ? 'text-neon' : 'text-amber-400'}`}>

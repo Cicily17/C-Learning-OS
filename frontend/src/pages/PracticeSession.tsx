@@ -6,6 +6,7 @@ import {
   Timer, CheckCircle2, XCircle, ChevronLeft,
 } from 'lucide-react'
 import { aiApi, practiceApi } from '../api/client'
+import { AnswerText } from '../components/AnswerText'
 import { Panel, ProgressBar, useToast } from '../components/Layout'
 import CodeAnswerWorkspace from '../components/CodeAnswerWorkspace'
 import type { Question } from '../types'
@@ -217,7 +218,8 @@ export default function PracticeSession() {
           {revealed && (
             <Panel title="参考答案（练习模式可见）">
               <div className="space-y-3">
-                <div className="flex items-center gap-2 text-xs text-neon"><CheckCircle2 size={15} /> 正确答案：{revealed.answer}</div>
+                <div className="flex items-center gap-2 text-xs text-neon"><CheckCircle2 size={15} /> 正确答案</div>
+                <AnswerText answer={revealed.answer} type={q?.question_type} caption="参考答案 · C11" />
                 <div className="rounded-lg border border-ink-700/60 bg-ink-900/50 p-3 text-xs leading-6 text-steel-400">{revealed.explanation}</div>
               </div>
             </Panel>
@@ -334,8 +336,9 @@ export default function PracticeSession() {
             {revealed ? (
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-xs text-neon">
-                  <CheckCircle2 size={15} /> 正确答案：{revealed.answer}
+                  <CheckCircle2 size={15} /> 正确答案
                 </div>
+                <AnswerText answer={revealed.answer} type={q?.question_type} caption="参考答案 · C11" />
                 <div className="rounded-lg border border-ink-700/60 bg-ink-900/50 p-3 text-xs leading-6 text-steel-400">
                   {revealed.explanation}
                 </div>

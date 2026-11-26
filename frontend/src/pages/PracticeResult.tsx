@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { CheckCircle2, XCircle, RotateCcw, ArrowRight, ListChecks } from 'lucide-react'
 import { practiceApi } from '../api/client'
+import { AnswerText } from '../components/AnswerText'
 import { Panel } from '../components/Layout'
 import AnswerReview from '../components/AnswerReview'
 
@@ -64,11 +65,13 @@ export default function PracticeResult() {
               {item.code_content && <pre className="code-block mb-3">{item.code_content}</pre>}
               <div className="grid gap-2 text-xs sm:grid-cols-2">
                 <div className="rounded border border-ink-700/50 bg-ink-950/50 p-2.5">
-                  <span className="text-steel-500">你的答案：</span>
-                  <span className={item.is_correct ? 'text-neon' : 'text-red-300'}>{item.user_answer || '（未作答）'}</span>
+                  <div className="mb-1 text-steel-500">你的答案</div>
+                  <AnswerText answer={item.user_answer} type={item.question_type}
+                    tone={item.is_correct ? 'neon' : 'danger'} caption="你的作答 · C11" />
                 </div>
                 <div className="rounded border border-neon/20 bg-neon/5 p-2.5">
-                  <span className="text-steel-500">正确答案：</span><span className="text-neon">{item.correct_answer}</span>
+                  <div className="mb-1 text-steel-500">正确答案</div>
+                  <AnswerText answer={item.correct_answer} type={item.question_type} caption="参考答案 · C11" />
                 </div>
               </div>
               <div className="mt-3 rounded border border-ink-700/50 bg-ink-950/40 p-3 text-xs leading-6 text-steel-400">

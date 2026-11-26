@@ -37,3 +37,7 @@ build/
 .idea/
 .DS_Store
 Thumbs.db
+
+# 本地调试产物
+tools/.shots/
+tools/.tmp/

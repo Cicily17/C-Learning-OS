@@ -1,44 +1,18 @@
 import { Heading } from '@astryxdesign/core/Heading'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { Highlight, themes } from 'prism-react-renderer'
 import {
-  ArrowLeft, Bookmark, CheckCircle2, Copy, Terminal, Lightbulb,
-  AlertTriangle, GitBranch, Target, Dumbbell,
+  ArrowLeft, Bookmark, CheckCircle2, Lightbulb,
+  AlertTriangle, Dumbbell, Terminal,
 } from 'lucide-react'
 import { learningApi } from '../api/client'
+import { CatNote } from '../components/Brand'
+import { CodeBreakdown } from '../components/CodeBreakdown'
 import { Panel } from '../components/Layout'
 import { useToast } from '../components/Layout'
 import type { KnowledgePoint } from '../types'
 
-function CodeView({ code }: { code: string }) {
-  const toast = useToast()
-  return (
-    <div className="relative">
-      <button
-        className="absolute right-2 top-2 z-10 rounded border border-ink-600/70 bg-ink-900/90 p-1.5 text-steel-400 transition hover:border-neon/50 hover:text-neon"
-        onClick={() => { navigator.clipboard.writeText(code); toast('代码已复制到剪贴板', 'success') }}
-        title="复制代码"
-      >
-        <Copy size={14} />
-      </button>
-      <Highlight theme={themes.vsDark} code={code.trim()} language="c">
-        {({ className, style, tokens, getLineProps, getTokenProps }) => (
-          <pre className={`${className} code-block !bg-[#04100b] !p-4 !pr-12`} style={{ ...style, background: 'transparent' }}>
-            {tokens.map((line, i) => (
-              <div key={i} {...getLineProps({ line })}>
-                <span className="mr-4 inline-block w-5 select-none text-right text-ink-600">{i + 1}</span>
-                {line.map((token, j) => <span key={j} {...getTokenProps({ token })} />)}
-              </div>
-            ))}
-          </pre>
-        )}
-      </Highlight>
-    </div>
-  )
-}
-
-function parseArr(json: string): string[] {
+function parseArr(json: string): any[] {
   try { const v = JSON.parse(json); return Array.isArray(v) ? v : [] } catch { return [] }
 }
 
@@ -52,9 +26,13 @@ export default function KnowledgeDetail() {
 
   if (!kp) return <div className="panel p-8 text-xs text-steel-400">正在加载知识点...</div>
 
-  const examples = parseArr(kp.examples_json)
   const errors = parseArr(kp.common_errors_json)
-  const lines = parseArr(kp.line_explain_json)
+  const samples = (parseArr(kp.examples_json) as any[])
+    .map((ex, i) => ({
+      title: (typeof ex === 'object' && ex?.title) || `示例 ${i + 1}`,
+      code: typeof ex === 'string' ? ex : String(ex?.code || ''),
+    }))
+    .filter((s) => s.code.trim())
 
   const markMastered = async () => {
     try {
@@ -79,9 +57,11 @@ export default function KnowledgeDetail() {
           <Link to="/learning" className="mb-3 inline-flex items-center gap-1 text-xs text-steel-400 hover:text-neon">
             <ArrowLeft size={14} /> 返回知识目录
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="font-mono text-xs text-steel-500">{kp.code}</span>
             <span className="tag">{kp.difficulty}</span>
+            <span className="tag">预计 {kp.estimated_minutes} 分钟</span>
+            <span className="tag">进度 {kp.progress_pct}%</span>
             {kp.mastered && <span className="tag-neon">已掌握</span>}
           </div>
           <Heading level={1}>{kp.name}</Heading>
@@ -107,31 +87,9 @@ export default function KnowledgeDetail() {
           <Panel title="通俗解释">
             <div className="markdown-body whitespace-pre-wrap">{kp.explanation_md}</div>
           </Panel>
-          <Panel title="语法结构">
+          <Panel title="语法结构" hint="可直接对照下方逐行拆解">
             <div className="code-block text-neon-soft">{kp.syntax_md}</div>
           </Panel>
-          <Panel title="基础代码示例" action={<span className="text-xs text-steel-500">标准 C11</span>}>
-            <div className="space-y-4">
-              {examples.length ? examples.map((ex: any, i: number) => (
-                <div key={i}>
-                  <div className="mb-2 text-xs text-steel-400">{ex.title || `示例 ${i + 1}`}</div>
-                  <CodeView code={typeof ex === 'string' ? ex : ex.code} />
-                </div>
-              )) : <CodeView code={''} />}
-            </div>
-          </Panel>
-          {!!lines.length && (
-            <Panel title="代码逐行解释">
-              <div className="space-y-1.5">
-                {lines.map((l: any, i: number) => (
-                  <div key={i} className="flex gap-3 rounded border border-ink-700/50 bg-ink-900/40 px-3 py-1.5 text-xs">
-                    <span className="font-mono text-xs text-neon-dim">{typeof l === 'string' ? i + 1 : l.line}</span>
-                    <span className="text-steel-400">{typeof l === 'string' ? l : l.text}</span>
-                  </div>
-                ))}
-              </div>
-            </Panel>
-          )}
         </div>
 
         <div className="space-y-4">
@@ -147,25 +105,24 @@ export default function KnowledgeDetail() {
             ) : <p className="text-xs text-steel-500">暂无记录</p>}
           </Panel>
           <Panel title="学习提示">
-            <div className="space-y-3 text-xs leading-6 text-steel-400">
-              <div className="flex gap-2"><Lightbulb size={14} className="mt-1 shrink-0 text-neon" />建议先阅读核心概念，再对照代码逐行理解执行过程。</div>
-              <div className="flex gap-2"><Terminal size={14} className="mt-1 shrink-0 text-neon" />在线运行代码将在 M6 阶段接入隔离沙箱后开放。</div>
+            <div className="space-y-3">
+              <CatNote>
+                先读核心概念，再往下看逐行拆解 —— 把「这一行在做什么」串成一条数据流，比死记语法快得多。
+              </CatNote>
+              <div className="flex gap-2 text-xs leading-6 text-steel-400">
+                <Lightbulb size={14} className="mt-1 shrink-0 text-neon" />
+                点击代码行或讲解卡片，代码与讲解会互相对照高亮。
+              </div>
+              <div className="flex gap-2 text-xs leading-6 text-steel-400">
+                <Terminal size={14} className="mt-1 shrink-0 text-neon" />
+                讲解由本地静态分析实时推演，不上传代码；想真跑一遍可去「AI 助手 · 代码实验室」。
+              </div>
             </div>
           </Panel>
-          <Panel title="知识标签">
-            <div className="flex flex-wrap gap-2">
-              <span className="tag-neon">难度 {kp.difficulty}</span>
-              <span className="tag">预计 {kp.estimated_minutes} 分钟</span>
-              <span className="tag">进度 {kp.progress_pct}%</span>
-            </div>
-          </Panel>
-          <div className="grid grid-cols-3 gap-2">
-            <div className="panel p-3 text-center"><GitBranch size={14} className="mx-auto mb-1 text-steel-500" /><div className="text-xs text-steel-500">关联知识</div><div className="text-xs text-text-primary">{parseArr(kp.related_kp_ids).length}</div></div>
-            <div className="panel p-3 text-center"><Target size={14} className="mx-auto mb-1 text-steel-500" /><div className="text-xs text-steel-500">配套练习</div><div className="text-xs text-text-primary">题库</div></div>
-            <div className="panel p-3 text-center"><Bookmark size={14} className="mx-auto mb-1 text-steel-500" /><div className="text-xs text-steel-500">状态</div><div className="text-xs text-text-primary">{kp.mastered ? '已掌握' : '学习中'}</div></div>
-          </div>
         </div>
       </div>
+
+      {samples.length > 0 && <CodeBreakdown samples={samples} name={kp.name} />}
     </div>
   )
 }

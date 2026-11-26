@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@astryxdesign/core/Button'
 import { aiApi, examsApi, learningApi, practiceApi } from '../api/client'
+import { AnswerText } from '../components/AnswerText'
 import {
   ConfirmDialog, EmptyState, PageHeader, Panel, ProgressBar, useToast,
 } from '../components/Layout'
@@ -344,7 +345,7 @@ export default function Archive() {
                   <div className="mb-2 whitespace-pre-wrap text-sm leading-7 text-text-primary">{w.question_content}</div>
                   {w.code_content && <pre className="code-block mb-2">{w.code_content}</pre>}
                   <div className="grid gap-2 text-xs sm:grid-cols-2">
-                    <div className="rounded-lg border border-neon/20 bg-neon/[0.04] p-3"><span className="text-steel-500">正确答案：</span><span className="text-neon">{w.correct_answer}</span></div>
+                    <div className="rounded-lg border border-neon/20 bg-neon/[0.04] p-3"><div className="mb-1 text-steel-500">正确答案</div><AnswerText answer={w.correct_answer} type={w.question_type} caption="参考答案 · C11" /></div>
                     <div className="rounded-lg border border-ink-700/50 p-3 text-steel-400"><span className="text-steel-500">解析：</span>{w.explanation}</div>
                   </div>
                 </div>

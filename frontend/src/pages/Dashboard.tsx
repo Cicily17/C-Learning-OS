@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@astryxdesign/core/Button'
 import { examsApi, gameApi, learningApi } from '../api/client'
+import { CatSpeech, MascotSticker } from '../components/Brand'
 import { EmptyState, PageHeader, Panel, ProgressBar, SectionHeading } from '../components/Layout'
 
 function LevelRing({ level, pct, exp, title }: { level: number; pct: number; exp: number; title: string }) {
@@ -162,6 +163,13 @@ export default function Dashboard() {
     { label: '待复习错题', value: `${data.wrong_count}`, sub: '来自真实作答记录', tone: data.wrong_count ? 'text-danger' : 'text-steel-300' },
   ]
 
+  // 编译猫的今日留言：优先指向「最该做的事」，不说空话
+  const catLine = data.wrong_count > 0
+    ? `还有 ${data.wrong_count} 道错题在等你，先复习 20 分钟，正确率涨得最快。`
+    : data.user.streak_days > 0
+      ? `连续 ${data.user.streak_days} 天在线，先做一组练习热身，手感别断。`
+      : '第一次见面？先读一个知识点，我陪你把代码逐行拆明白。'
+
   return (
     <div className="space-y-7">
       <PageHeader
@@ -237,30 +245,37 @@ export default function Dashboard() {
           </div>
 
           <div className="flex justify-center lg:justify-end">
-            <div className="w-full max-w-[330px] rounded-2xl border border-ink-700/60 bg-[#0a1016]/70 p-5 backdrop-blur-sm">
-              <div className="flex items-center gap-4">
-                <LevelRing level={level.level} pct={level.progress_pct} exp={level.exp} title={level.title} />
-                <div className="min-w-0 flex-1 space-y-3">
-                  <div>
-                    <div className="text-xs text-steel-500">距离下一级</div>
-                    <div className="mt-1 font-mono text-xl font-semibold text-text-primary">
-                      {level.exp % 200}<span className="text-sm text-steel-500"> / 200</span>
+            <div className="w-full max-w-[330px]">
+              {/* 学习搭子：C//CAT 编译猫 */}
+              <div className="mb-3 flex items-end justify-end gap-2">
+                <CatSpeech className="max-w-[196px] !text-[11px] !leading-5">{catLine}</CatSpeech>
+                <MascotSticker size={88} className="mr-1" />
+              </div>
+              <div className="rounded-2xl border border-ink-700/60 bg-[#0a1016]/70 p-5 backdrop-blur-sm">
+                <div className="flex items-center gap-4">
+                  <LevelRing level={level.level} pct={level.progress_pct} exp={level.exp} title={level.title} />
+                  <div className="min-w-0 flex-1 space-y-3">
+                    <div>
+                      <div className="text-xs text-steel-500">距离下一级</div>
+                      <div className="mt-1 font-mono text-xl font-semibold text-text-primary">
+                        {level.exp % 200}<span className="text-sm text-steel-500"> / 200</span>
+                      </div>
                     </div>
-                  </div>
-                  <div>
-                    <div className="mb-1 flex justify-between text-xs text-steel-500">
-                      <span>章节通关</span><span>{passed}/{chapters.length || 12}</span>
+                    <div>
+                      <div className="mb-1 flex justify-between text-xs text-steel-500">
+                        <span>章节通关</span><span>{passed}/{chapters.length || 12}</span>
+                      </div>
+                      <ProgressBar value={chapters.length ? (passed / chapters.length) * 100 : 0} tone="warning" />
                     </div>
-                    <ProgressBar value={chapters.length ? (passed / chapters.length) * 100 : 0} tone="warning" />
-                  </div>
-                  <div className="flex items-center gap-1.5 text-xs text-steel-400">
-                    <Flame size={13} className="text-danger" /> 连续学习 {data.user.streak_days} 天
+                    <div className="flex items-center gap-1.5 text-xs text-steel-400">
+                      <Flame size={13} className="text-danger" /> 连续学习 {data.user.streak_days} 天
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="mt-4 flex items-center justify-between border-t border-ink-700/50 pt-3 text-[11px] text-steel-500">
-                <span className="inline-flex items-center gap-1.5"><span className="h-1 w-1 rounded-full bg-neon" />学习终端在线</span>
-                <span>EXP 由真实作答产生</span>
+                <div className="mt-4 flex items-center justify-between border-t border-ink-700/50 pt-3 text-[11px] text-steel-500">
+                  <span className="inline-flex items-center gap-1.5"><span className="h-1 w-1 rounded-full bg-neon" />学习终端在线</span>
+                  <span>EXP 由真实作答产生</span>
+                </div>
               </div>
             </div>
           </div>
